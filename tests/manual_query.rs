@@ -25,7 +25,7 @@
 //! - Build confidence before adding complexity
 //! - Serve as documentation for expected behavior
 
-use mini_olap_database::{Column, FloatColumn, IntColumn, StringColumn, Value};
+use mini_rust_olap::{Column, FloatColumn, IntColumn, StringColumn, Value};
 
 /// Test 1: Simple column creation and data insertion
 ///

@@ -1,4 +1,4 @@
-# RustyCube - Mini OLAP Database Development Progress
+# Mini Rust OLAP - Mini OLAP Database Development Progress
 
 ## 📊 Overall Status: **Phase 1 Complete** ✅ | **Phase 2 Starting** 🚀
 
@@ -368,6 +368,7 @@
 | Test Count | 50+ | 87 |
 | Lines of Code | ~2000 | ~2000 |
 | Dependencies | <10 | 8 |
+| Project Name | mini_rust_olap | ✅ Updated |
 | Build Time | <10s | ~2s |
 
 ---
@@ -408,5 +409,5 @@
 ---
 
 **Last Updated:** Phase 1 Complete  
-**Developer:** RustyCube Team  
+**Developer:** Mini Rust OLAP Team  
 **Status:** 🎉 Phase 1 Complete - Ready for Phase 2

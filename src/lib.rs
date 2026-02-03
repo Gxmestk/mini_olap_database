@@ -1,12 +1,12 @@
-//! # RustyCube - Mini OLAP Database Engine
+//! # Mini Rust OLAP - Mini OLAP Database Engine
 //!
-//! RustyCube is a lightweight, in-memory OLAP (Online Analytical Processing) database engine
+//! Mini Rust OLAP is a lightweight, in-memory OLAP (Online Analytical Processing) database engine
 //! implemented in Rust. Its primary purpose is educational: to demonstrate the core principles
 //! of column-oriented storage, query execution, and aggregation.
 //!
 //! ## Architecture Overview
 //!
-//! RustyCube is organized into several key modules:
+//! Mini Rust OLAP is organized into several key modules:
 //!
 //! - [`error`] - Comprehensive error handling and result types
 //! - [`types`] - Core data types (DataType, Value, etc.)
@@ -29,9 +29,9 @@
 //! ## Quick Start
 //!
 //! ```no_run
-//! use rusty_cube::error::Result;
-//! use rusty_cube::catalog::Catalog;
-//! use rusty_cube::ingest::load_csv;
+//! use mini_rust_olap::error::Result;
+//! use mini_rust_olap::catalog::Catalog;
+//! use mini_rust_olap::ingest::load_csv;
 //!
 //! fn main() -> Result<()> {
 //!     let mut catalog = Catalog::new();
@@ -81,7 +81,7 @@ pub mod types;
 // VERSION INFORMATION
 // ============================================================================
 
-/// The current version of RustyCube
+/// The current version of Mini Rust OLAP
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 
 /// The name of the database
@@ -95,7 +95,7 @@ mod tests {
     #[test]
     fn test_version_info() {
         assert!(!VERSION.is_empty());
-        assert_eq!(NAME, "mini_olap_database");
+        assert_eq!(NAME, "mini_rust_olap");
     }
 
     /// Test that Result type alias works

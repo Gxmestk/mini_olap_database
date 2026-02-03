@@ -1,8 +1,8 @@
 [package]
-name = "mini_olap_database"
+name = "mini_rust_olap"
 version = "0.1.0"
 edition = "2021"
-authors = ["RustyCube Team"]
+authors = ["GTKMRE Team"]
 description = "A lightweight, in-memory OLAP database engine for educational purposes"
 license = "MIT"
 

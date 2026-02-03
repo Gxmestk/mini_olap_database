@@ -1,8 +1,8 @@
 //! # Column Module
 //!
-//! This module defines the columnar storage abstraction for RustyCube.
+//! This module defines the columnar storage abstraction for Mini Rust OLAP.
 //!
-//! ## Why Columnar Storage?
+//! ### Why Columnar Storage?
 //!
 //! In traditional row-oriented databases (OLTP), data is stored like this:
 //! ```text
@@ -60,7 +60,7 @@ use crate::types::{DataType, Value};
 
 /// A trait that defines the interface for columnar storage
 ///
-/// This trait provides a common abstraction for all column types in RustyCube.
+/// This trait provides a common abstraction for all column types in Mini Rust OLAP.
 /// Each column type implements this trait to provide type-safe storage and
 /// retrieval of data.
 ///

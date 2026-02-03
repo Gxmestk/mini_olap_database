@@ -1,6 +1,6 @@
 //! # Core Data Types Module
 //!
-//! This module defines the fundamental data types used throughout RustyCube.
+//! This module defines the fundamental data types used throughout Mini Rust OLAP.
 //!
 //! ## Why Data Types Matter in Databases
 //!
@@ -43,7 +43,7 @@ use crate::error::{DatabaseError, Result};
 
 /// Represents the data type of a column in the database schema
 ///
-/// This enum defines the supported data types for RustyCube columns.
+//! This enum defines the supported data types for Mini Rust OLAP columns.
 /// Each variant corresponds to a specific storage layout and operations.
 ///
 /// ## Type Characteristics

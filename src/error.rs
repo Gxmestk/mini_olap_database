@@ -1,6 +1,6 @@
 //! # Error Handling Module
 //!
-//! This module defines all error types for the RustyCube OLAP database.
+//! This module defines all error types for the Mini Rust OLAP database.
 //!
 //! ## Design Philosophy
 //!
@@ -13,11 +13,13 @@
 //! ## Error Categories
 //!
 //! Errors are organized by subsystem:
-//! 1. **Storage Errors**: Column and table operations
-//! 2. **Ingestion Errors**: CSV parsing and data loading
-//! 3. **Execution Errors**: Query execution problems
-//! 4. **Parser Errors**: SQL syntax and parsing issues
-//! 5. **Catalog Errors**: Metadata management issues
+//! 1. **Column Errors**: Column operations
+//! 2. **Table Errors**: Table operations
+//! 3. **Catalog Errors**: Metadata management
+//! 4. **Ingestion Errors**: CSV parsing and data loading
+//! 5. **Execution Errors**: Query execution problems
+//! 6. **Parser Errors**: SQL syntax and parsing issues
+//! 7. **Type Errors**: Data type and conversion issues
 //!
 //! ## Usage Example
 //!
@@ -27,7 +29,7 @@
 //! fn load_data() -> Result<()> {
 //!     // This function returns a Result<T> which is aliased to std::result::Result<T, DatabaseError>
 //!     // If any operation fails, we use the `?` operator to propagate the error
-//!     Err(DatabaseError::StorageError("Failed to load data".to_string()))
+//!     Err(DatabaseError::ColumnError("Failed to load data".to_string()))
 //! }
 //! ```
 
@@ -50,7 +52,7 @@ use thiserror::Error;
 /// ```
 pub type Result<T> = std::result::Result<T, DatabaseError>;
 
-/// The main error type for RustyCube database operations
+/// The main error type for Mini Rust OLAP database operations
 ///
 /// This enum encompasses all possible errors that can occur throughout the database system.
 /// Each variant represents a different category of errors, making it easy to match and handle

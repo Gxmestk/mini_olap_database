@@ -1,4 +1,4 @@
-# RustyCube - Mini OLAP Database Engine
+# Mini Rust OLAP - Mini OLAP Database Engine
 
 <div align="center">
 
@@ -17,9 +17,9 @@
 
 ## 📖 About
 
-**RustyCube** is a miniature Online Analytical Processing (OLAP) database engine designed specifically for educational purposes. It demonstrates core database internals concepts through clean, well-documented Rust code.
+**Mini Rust OLAP** is a miniature Online Analytical Processing (OLAP) database engine designed specifically for educational purposes. It demonstrates core database internals concepts through clean, well-documented Rust code.
 
-### Why RustyCube?
+### Why Mini Rust OLAP?
 
 This project was created to help developers learn:
 
@@ -28,7 +28,7 @@ This project was created to help developers learn:
 - **Systems Programming**: Memory layout, CPU cache awareness, and performance optimization
 - **Query Execution**: From SQL parsing to physical operator execution
 
-Unlike production databases that are complex and hard to understand, RustyCube is intentionally simple while still demonstrating fundamental OLAP concepts.
+Unlike production databases that are complex and hard to understand, Mini Rust OLAP is intentionally simple while still demonstrating fundamental OLAP concepts.
 
 ### Educational Goals
 
@@ -76,7 +76,7 @@ Unlike production databases that are complex and hard to understand, RustyCube i
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                     RustyCube Architecture                  │
+│                  Mini Rust OLAP Architecture                │
 ├─────────────────────────────────────────────────────────────┤
 │                                                             │
 │  ┌─────────────┐    ┌─────────────┐    ┌─────────────┐   │
@@ -124,7 +124,7 @@ Row 2: [id: 2, name: "Bob",   age: 30]
 Row 3: [id: 3, name: "Charlie", age: 35]
 ```
 
-RustyCube (column-oriented OLAP) stores data like this:
+Mini Rust OLAP (column-oriented OLAP) stores data like this:
 
 ```
 id column:   [1, 2, 3, ...]
@@ -152,8 +152,8 @@ age column:  [25, 30, 35, ...]
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/mini_olap_database.git
-cd mini_olap_database
+git clone https://github.com/yourusername/mini_rust_olap.git
+cd mini_rust_olap
 
 # Build the project
 cargo build
@@ -168,11 +168,11 @@ RUST_LOG=debug cargo run
 ### Basic Usage Example
 
 ```rust
-use mini_olap_database::{
+use mini_rust_olap::{
     Column, IntColumn, FloatColumn, StringColumn, Value
 };
 
-fn main() -> mini_olap_database::Result<()> {
+fn main() -> mini_rust_olap::Result<()> {
     // Create columns
     let mut ids = IntColumn::new();
     let mut names = StringColumn::new();
@@ -205,9 +205,9 @@ fn main() -> mini_olap_database::Result<()> {
 ### Manual Filtering Example
 
 ```rust
-use mini_olap_database::{Column, IntColumn, FloatColumn, Value};
+use mini_rust_olap::{Column, IntColumn, FloatColumn, Value};
 
-fn main() -> mini_olap_database::Result<()> {
+fn main() -> mini_rust_olap::Result<()> {
     let mut scores = IntColumn::new();
     
     // Add some test scores
@@ -339,7 +339,7 @@ This project demonstrates:
 ## 🔬 Project Structure
 
 ```
-mini_olap_database/
+mini_rust_olap/
 ├── src/
 │   ├── main.rs              # Entry point (REPL - future)
 │   ├── lib.rs               # Library exports
@@ -624,8 +624,8 @@ This project is designed to help you understand:
 
 **Built with ❤️ for learning**
 
-**RustyCube - Where databases meet education**
+**Mini Rust OLAP - Where databases meet education**
 
-[⬆ Back to Top](#rustycube---mini-olap-database-engine)
+[⬆ Back to Top](#mini-rust-olap---mini-olap-database-engine)
 
 </div>
