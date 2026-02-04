@@ -25,7 +25,7 @@
 //! ## Usage Example
 //!
 //! ```no_run
-//! use crate::types::{DataType, Value};
+//! use mini_rust_olap::types::{DataType, Value};
 //!
 //! // Define a column schema
 //! let age_type = DataType::Int64;
@@ -59,7 +59,7 @@ use crate::error::{DatabaseError, Result};
 ///
 /// # Example
 /// ```rust
-/// use crate::types::DataType;
+/// use mini_rust_olap::types::DataType;
 ///
 /// let column_type = DataType::Int64;
 /// assert_eq!(column_type.size(), 8);
@@ -85,7 +85,7 @@ impl DataType {
     ///
     /// # Example
     /// ```rust
-    /// use crate::types::DataType;
+    /// use mini_rust_olap::types::DataType;
     ///
     /// assert_eq!(DataType::Int64.name(), "Int64");
     /// assert_eq!(DataType::Float64.name(), "Float64");
@@ -106,7 +106,7 @@ impl DataType {
     ///
     /// # Example
     /// ```rust
-    /// use crate::types::DataType;
+    /// use mini_rust_olap::types::DataType;
     ///
     /// assert_eq!(DataType::Int64.size(), 8);
     /// assert_eq!(DataType::Float64.size(), 8);
@@ -126,7 +126,7 @@ impl DataType {
     ///
     /// # Example
     /// ```rust
-    /// use crate::types::DataType;
+    /// use mini_rust_olap::types::DataType;
     ///
     /// assert!(DataType::Int64.is_numeric());
     /// assert!(DataType::Float64.is_numeric());
@@ -145,7 +145,7 @@ impl DataType {
     ///
     /// # Example
     /// ```rust
-    /// use crate::types::DataType;
+    /// use mini_rust_olap::types::DataType;
     ///
     /// assert!(DataType::Int64.can_cast_to(DataType::Float64));
     /// assert!(!DataType::Float64.can_cast_to(DataType::Int64));
@@ -187,7 +187,7 @@ impl fmt::Display for DataType {
 ///
 /// # Example
 /// ```rust
-/// use crate::types::Value;
+/// use mini_rust_olap::types::Value;
 ///
 /// let age = Value::Int64(25);
 /// let price = Value::Float64(19.99);
@@ -212,7 +212,7 @@ impl Value {
     ///
     /// # Example
     /// ```rust
-    /// use crate::types::{Value, DataType};
+    /// use mini_rust_olap::types::{Value, DataType};
     ///
     /// let v = Value::Int64(42);
     /// assert_eq!(v.data_type(), DataType::Int64);
@@ -236,7 +236,7 @@ impl Value {
     ///
     /// # Example
     /// ```rust
-    /// use crate::types::{Value, DataType, DatabaseError};
+    /// use mini_rust_olap::types::{Value, DataType};
     ///
     /// let int_val = Value::Int64(42);
     /// let float_val = int_val.cast_to(DataType::Float64).unwrap();
@@ -276,10 +276,10 @@ impl Value {
     ///
     /// # Example
     /// ```rust
-    /// use crate::types::Value;
+    /// use mini_rust_olap::types::Value;
     ///
     /// assert!(Value::Int64(42).is_numeric());
-    /// assert!(Value::Float64(3.14).is_numeric());
+    /// assert!(Value::Float64(3.5).is_numeric());
     /// assert!(!Value::String("hello".to_string()).is_numeric());
     /// ```
     pub fn is_numeric(&self) -> bool {
@@ -293,7 +293,7 @@ impl Value {
     ///
     /// # Example
     /// ```rust
-    /// use crate::types::Value;
+    /// use mini_rust_olap::types::Value;
     ///
     /// let v1 = Value::Int64(42);
     /// let v2 = Value::Int64(42);
@@ -361,7 +361,7 @@ impl From<&str> for Value {
 ///
 /// # Example
 /// ```rust
-/// use crate::types::DataType;
+/// use mini_rust_olap::types::DataType;
 /// use std::str::FromStr;
 ///
 /// assert_eq!(DataType::from_str("Int64").unwrap(), DataType::Int64);
@@ -391,11 +391,11 @@ impl FromStr for DataType {
 ///
 /// # Example
 /// ```rust
-/// use crate::types::Value;
+/// use mini_rust_olap::types::Value;
 /// use std::str::FromStr;
 ///
 /// assert_eq!(Value::from_str("42").unwrap(), Value::Int64(42));
-/// assert_eq!(Value::from_str("3.14").unwrap(), Value::Float64(3.14));
+/// assert_eq!(Value::from_str("1.23456").unwrap(), Value::Float64(1.23456));
 /// assert_eq!(Value::from_str("hello").unwrap(), Value::String("hello".to_string()));
 /// ```
 impl FromStr for Value {
@@ -492,8 +492,8 @@ mod tests {
         let int_val = Value::Int64(42);
         assert!(matches!(int_val, Value::Int64(42)));
 
-        let float_val = Value::Float64(3.14);
-        assert!(matches!(float_val, Value::Float64(3.14)));
+        let float_val = Value::Float64(3.5);
+        assert!(matches!(float_val, Value::Float64(3.5)));
 
         let string_val = Value::String("hello".to_string());
         assert!(matches!(string_val, Value::String(_)));
@@ -502,7 +502,7 @@ mod tests {
     #[test]
     fn test_value_data_type() {
         assert_eq!(Value::Int64(42).data_type(), DataType::Int64);
-        assert_eq!(Value::Float64(3.14).data_type(), DataType::Float64);
+        assert_eq!(Value::Float64(3.5).data_type(), DataType::Float64);
         assert_eq!(
             Value::String("test".to_string()).data_type(),
             DataType::String
@@ -512,14 +512,14 @@ mod tests {
     #[test]
     fn test_value_is_numeric() {
         assert!(Value::Int64(42).is_numeric());
-        assert!(Value::Float64(3.14).is_numeric());
+        assert!(Value::Float64(3.5).is_numeric());
         assert!(!Value::String("test".to_string()).is_numeric());
     }
 
     #[test]
     fn test_value_display() {
         assert_eq!(format!("{}", Value::Int64(42)), "42");
-        assert_eq!(format!("{}", Value::Float64(3.14)), "3.14");
+        assert_eq!(format!("{}", Value::Float64(3.5)), "3.5");
         assert_eq!(format!("{}", Value::String("hello".to_string())), "hello");
     }
 
@@ -543,7 +543,7 @@ mod tests {
         let v2 = Value::Int64(42);
         assert!(v1.equals(&v2).unwrap());
 
-        let v3 = Value::Float64(3.14);
+        let v3 = Value::Float64(3.5);
         let result = v1.equals(&v3);
         assert!(result.is_err());
         assert!(matches!(result, Err(DatabaseError::TypeError(_))));
@@ -556,8 +556,8 @@ mod tests {
         assert_eq!(v, Value::Int64(42));
 
         // Test From<f64>
-        let v: Value = 3.14f64.into();
-        assert_eq!(v, Value::Float64(3.14));
+        let v: Value = 3.5f64.into();
+        assert_eq!(v, Value::Float64(3.5));
 
         // Test From<String>
         let v: Value = String::from("hello").into();
@@ -578,9 +578,9 @@ mod tests {
         let result = v.cast_to(DataType::Int64).unwrap();
         assert_eq!(result, Value::Int64(42));
 
-        let v = Value::Float64(3.14);
+        let v = Value::Float64(3.5);
         let result = v.cast_to(DataType::Float64).unwrap();
-        assert_eq!(result, Value::Float64(3.14));
+        assert_eq!(result, Value::Float64(3.5));
 
         let v = Value::String("hello".to_string());
         let result = v.cast_to(DataType::String).unwrap();
@@ -604,7 +604,7 @@ mod tests {
         let result = v.cast_to(DataType::Int64).unwrap();
         assert!(matches!(result, Value::Int64(42))); // Note: truncates
 
-        let v = Value::Float64(-3.14);
+        let v = Value::Float64(-3.5);
         let result = v.cast_to(DataType::Int64).unwrap();
         assert!(matches!(result, Value::Int64(-3))); // Note: truncates
     }
@@ -649,8 +649,8 @@ mod tests {
         assert_eq!(v, Value::Int64(-123));
 
         // Parse as float
-        let v = Value::from_str("3.14").unwrap();
-        assert_eq!(v, Value::Float64(3.14));
+        let v = Value::from_str("1.23456").unwrap();
+        assert_eq!(v, Value::Float64(1.23456));
 
         let v = Value::from_str("-0.5").unwrap();
         assert_eq!(v, Value::Float64(-0.5));
@@ -682,7 +682,7 @@ mod tests {
         let v2 = Value::Int64(42);
         assert_eq!(v1, v2);
 
-        let v3 = Value::Float64(3.14);
+        let v3 = Value::Float64(3.5);
         assert_ne!(v1, v3);
     }
 
@@ -739,7 +739,7 @@ mod tests {
         assert_eq!(Value::from_str("-9876").unwrap(), Value::Int64(-9876));
 
         // Float with decimal
-        assert_eq!(Value::from_str("3.14159").unwrap(), Value::Float64(3.14159));
+        assert_eq!(Value::from_str("42.5").unwrap(), Value::Float64(42.5));
 
         // String that could be a number but has letters
         assert_eq!(
