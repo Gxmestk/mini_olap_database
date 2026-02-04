@@ -147,11 +147,11 @@ print_success "All unit tests passed"
 print_header "6. Integration Tests (cargo test --test)"
 
 # Run integration tests
-if ! cargo test --test --quiet 2>&1; then
+if ! cargo test --quiet 2>&1; then
     print_error "Integration tests failed"
     echo ""
     echo "Please fix failing integration tests:"
-    echo "  cargo test --test"
+    echo "  cargo test"
     echo ""
     exit 1
 fi

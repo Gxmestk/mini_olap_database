@@ -24,7 +24,7 @@
 //! ## Usage Example
 //!
 //! ```no_run
-//! use crate::error::{Result, DatabaseError};
+//! use mini_rust_olap::error::{Result, DatabaseError};
 //!
 //! fn load_data() -> Result<()> {
 //!     // This function returns a Result<T> which is aliased to std::result::Result<T, DatabaseError>
@@ -44,7 +44,7 @@ use thiserror::Error;
 ///
 /// # Example
 /// ```rust
-/// use crate::error::Result;
+/// use mini_rust_olap::error::Result;
 ///
 /// fn get_value() -> Result<i32> {
 ///     Ok(42)
@@ -65,11 +65,11 @@ pub type Result<T> = std::result::Result<T, DatabaseError>;
 ///
 /// # Example
 /// ```rust
-/// use crate::error::DatabaseError;
+/// use mini_rust_olap::error::{DatabaseError, Result};
 ///
 /// fn process() -> Result<()> {
 ///     // Some operation that might fail
-///     Err(DatabaseError::StorageError("Out of memory".to_string()))
+///     Err(DatabaseError::ExecutionError("Out of memory".to_string()))
 /// }
 /// ```
 #[derive(Error, Debug)]
@@ -152,7 +152,7 @@ impl DatabaseError {
     ///
     /// # Example
     /// ```rust
-    /// use crate::error::DatabaseError;
+    /// use mini_rust_olap::error::DatabaseError;
     ///
     /// let err = DatabaseError::column_error("Cannot insert String into IntColumn");
     /// ```
@@ -164,7 +164,7 @@ impl DatabaseError {
     ///
     /// # Example
     /// ```rust
-    /// use crate::error::DatabaseError;
+    /// use mini_rust_olap::error::DatabaseError;
     ///
     /// let err = DatabaseError::table_error("Table 'users' already exists");
     /// ```
@@ -176,7 +176,7 @@ impl DatabaseError {
     ///
     /// # Example
     /// ```rust
-    /// use crate::error::DatabaseError;
+    /// use mini_rust_olap::error::DatabaseError;
     ///
     /// let err = DatabaseError::catalog_error("Table 'users' not found in catalog");
     /// ```
@@ -188,7 +188,7 @@ impl DatabaseError {
     ///
     /// # Example
     /// ```rust
-    /// use crate::error::DatabaseError;
+    /// use mini_rust_olap::error::DatabaseError;
     ///
     /// let err = DatabaseError::ingestion_error("Failed to parse CSV at line 42");
     /// ```
@@ -200,7 +200,7 @@ impl DatabaseError {
     ///
     /// # Example
     /// ```rust
-    /// use crate::error::DatabaseError;
+    /// use mini_rust_olap::error::DatabaseError;
     ///
     /// let err = DatabaseError::execution_error("Column 'age' not found in table");
     /// ```
@@ -212,7 +212,7 @@ impl DatabaseError {
     ///
     /// # Example
     /// ```rust
-    /// use crate::error::DatabaseError;
+    /// use mini_rust_olap::error::DatabaseError;
     ///
     /// let err = DatabaseError::parser_error("Expected 'FROM' keyword at position 10");
     /// ```
@@ -224,7 +224,7 @@ impl DatabaseError {
     ///
     /// # Example
     /// ```rust
-    /// use crate::error::DatabaseError;
+    /// use mini_rust_olap::error::DatabaseError;
     ///
     /// let err = DatabaseError::type_error("Cannot add String to Int64");
     /// ```
@@ -247,12 +247,16 @@ mod tests {
         // Test Ok variant
         let result: Result<i32> = Ok(42);
         assert!(result.is_ok());
-        assert_eq!(result.unwrap(), 42);
+        if let Ok(v) = result {
+            assert_eq!(v, 42);
+        }
 
         // Test Err variant
         let result: Result<i32> = Err(DatabaseError::column_error("test error"));
         assert!(result.is_err());
-        assert_eq!(result.unwrap_err().to_string(), "Column error: test error");
+        if let Err(e) = result {
+            assert_eq!(e.to_string(), "Column error: test error");
+        }
     }
 
     /// Tests error creation using convenience methods
@@ -372,11 +376,11 @@ mod tests {
         }
 
         fn level_2() -> Result<i32> {
-            Ok(level_3()?) // Propagate from level 3
+            level_3() // Propagate from level 3
         }
 
         fn level_1() -> Result<i32> {
-            Ok(level_2()?) // Propagate from level 2
+            level_2() // Propagate from level 2
         }
 
         let result = level_1();

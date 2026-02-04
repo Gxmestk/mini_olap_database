@@ -33,8 +33,8 @@
 //! ## Usage Example
 //!
 //! ```no_run
-//! use crate::column::{Column, IntColumn, FloatColumn, StringColumn};
-//! use crate::types::{DataType, Value};
+//! use mini_rust_olap::column::{Column, IntColumn, FloatColumn, StringColumn};
+//! use mini_rust_olap::types::{DataType, Value};
 //!
 //! // Create columns
 //! let mut ids = IntColumn::new();
@@ -49,6 +49,7 @@
 //! // Retrieve data (returns owned Value)
 //! let first_id = ids.get(0)?;
 //! assert_eq!(first_id, Value::Int64(1));
+//! # Ok::<(), Box<dyn std::error::Error>>(())
 //! ```
 
 use crate::error::{DatabaseError, Result};
@@ -80,12 +81,11 @@ use crate::types::{DataType, Value};
 /// # Example
 ///
 /// ```rust
-/// use crate::column::{Column, IntColumn};
-/// use crate::types::{DataType, Value};
+/// use mini_rust_olap::column::{Column, IntColumn};
+/// use mini_rust_olap::types::{DataType, Value};
 ///
 /// let mut col = IntColumn::new();
-/// col.push_value(Value::Int64(42))?;
-/// assert_eq!(col.len(), 1);
+/// col.push_value(Value::Int64(42)).unwrap();
 /// assert_eq!(col.get(0).unwrap(), Value::Int64(42));
 /// ```
 pub trait Column {
@@ -98,7 +98,8 @@ pub trait Column {
     ///
     /// # Example
     /// ```rust
-    /// use crate::column::{Column, IntColumn};
+    /// use mini_rust_olap::column::{Column, IntColumn};
+    /// use mini_rust_olap::types::DataType;
     ///
     /// let col = IntColumn::new();
     /// assert_eq!(col.data_type(), DataType::Int64);
@@ -114,12 +115,12 @@ pub trait Column {
     ///
     /// # Example
     /// ```rust
-    /// use crate::column::{Column, IntColumn};
-    /// use crate::types::Value;
+    /// use mini_rust_olap::column::{Column, IntColumn};
+    /// use mini_rust_olap::types::Value;
     ///
     /// let mut col = IntColumn::new();
     /// assert_eq!(col.len(), 0);
-    /// col.push_value(Value::Int64(1))?;
+    /// col.push_value(Value::Int64(1)).unwrap();
     /// assert_eq!(col.len(), 1);
     /// ```
     fn len(&self) -> usize;
@@ -150,12 +151,12 @@ pub trait Column {
     ///
     /// # Example
     /// ```rust
-    /// use crate::column::{Column, IntColumn};
-    /// use crate::types::Value;
+    /// use mini_rust_olap::column::{Column, IntColumn};
+    /// use mini_rust_olap::types::Value;
     ///
     /// let mut col = IntColumn::new();
     /// col.push_value(Value::Int64(42))?;
-    /// # Ok::<(), crate::error::DatabaseError>(())
+    /// # Ok::<(), mini_rust_olap::error::DatabaseError>(())
     /// ```
     fn push_value(&mut self, value: Value) -> Result<()>;
 
@@ -176,14 +177,14 @@ pub trait Column {
     ///
     /// # Example
     /// ```rust
-    /// use crate::column::{Column, IntColumn};
-    /// use crate::types::Value;
+    /// use mini_rust_olap::column::{Column, IntColumn};
+    /// use mini_rust_olap::types::Value;
     ///
     /// let mut col = IntColumn::new();
     /// col.push_value(Value::Int64(42))?;
     /// let value = col.get(0)?;
     /// assert_eq!(value, Value::Int64(42));
-    /// # Ok::<(), crate::error::DatabaseError>(())
+    /// # Ok::<(), mini_rust_olap::error::DatabaseError>(())
     /// ```
     fn get(&self, index: usize) -> Result<Value>;
 
@@ -200,8 +201,8 @@ pub trait Column {
     ///
     /// # Example
     /// ```rust
-    /// use crate::column::{Column, IntColumn};
-    /// use crate::types::Value;
+    /// use mini_rust_olap::column::{Column, IntColumn};
+    /// use mini_rust_olap::types::Value;
     ///
     /// let mut col = IntColumn::new();
     /// col.push_value(Value::Int64(1))?;
@@ -210,7 +211,7 @@ pub trait Column {
     ///
     /// let values = col.slice(None);
     /// assert_eq!(values.len(), 3);
-    /// # Ok::<(), crate::error::DatabaseError>(())
+    /// # Ok::<(), mini_rust_olap::error::DatabaseError>(())
     /// ```
     fn slice(&self, range: Option<std::ops::Range<usize>>) -> Vec<Value>;
 
@@ -221,8 +222,8 @@ pub trait Column {
     ///
     /// # Example
     /// ```rust
-    /// use crate::column::{Column, IntColumn};
-    /// use crate::types::Value;
+    /// use mini_rust_olap::column::{Column, IntColumn};
+    /// use mini_rust_olap::types::Value;
     ///
     /// let mut col = IntColumn::new();
     /// col.push_value(Value::Int64(1))?;
@@ -230,7 +231,7 @@ pub trait Column {
     /// assert_eq!(col.len(), 2);
     /// col.clear();
     /// assert_eq!(col.len(), 0);
-    /// # Ok::<(), crate::error::DatabaseError>(())
+    /// # Ok::<(), mini_rust_olap::error::DatabaseError>(())
     /// ```
     fn clear(&mut self);
 }
@@ -256,12 +257,12 @@ pub trait Column {
 /// # Example
 ///
 /// ```rust
-/// use crate::column::{Column, IntColumn};
-/// use crate::types::Value;
+/// use mini_rust_olap::column::{Column, IntColumn};
+/// use mini_rust_olap::types::Value;
 ///
 /// let mut col = IntColumn::new();
-/// col.push_value(Value::Int64(42))?;
-/// col.push_value(Value::Int64(100))?;
+/// col.push_value(Value::Int64(42)).unwrap();
+/// col.push_value(Value::Int64(43)).unwrap();
 /// assert_eq!(col.len(), 2);
 /// ```
 #[derive(Debug, Clone)]
@@ -278,7 +279,7 @@ impl IntColumn {
     ///
     /// # Example
     /// ```rust
-    /// use crate::column::IntColumn;
+    /// use mini_rust_olap::column::{Column, IntColumn};
     ///
     /// let col = IntColumn::new();
     /// assert_eq!(col.len(), 0);
@@ -300,8 +301,8 @@ impl IntColumn {
     ///
     /// # Example
     /// ```rust
-    /// use crate::column::IntColumn;
-    /// use crate::types::Value;
+    /// use mini_rust_olap::column::IntColumn;
+    /// use mini_rust_olap::types::Value;
     ///
     /// let mut col = IntColumn::with_capacity(100);
     /// // Adding up to 100 values won't cause reallocation
@@ -322,13 +323,14 @@ impl IntColumn {
     ///
     /// # Example
     /// ```rust
-    /// use crate::column::IntColumn;
-    /// use crate::types::Value;
+    /// use mini_rust_olap::column::{Column, IntColumn};
+    /// use mini_rust_olap::types::Value;
     ///
     /// let mut col = IntColumn::new();
     /// col.push_value(Value::Int64(42)).unwrap();
-    /// let data = col.as_vec();
-    /// assert_eq!(data, &[42]);
+    /// col.push_value(Value::Int64(43)).unwrap();
+    /// let vec = col.as_vec();
+    /// assert_eq!(vec, &[42, 43]);
     /// ```
     pub fn as_vec(&self) -> &[i64] {
         &self.data
@@ -408,12 +410,12 @@ impl Column for IntColumn {
 /// # Example
 ///
 /// ```rust
-/// use crate::column::{Column, FloatColumn};
-/// use crate::types::Value;
+/// use mini_rust_olap::column::{Column, FloatColumn};
+/// use mini_rust_olap::types::Value;
 ///
 /// let mut col = FloatColumn::new();
-/// col.push_value(Value::Float64(3.14))?;
-/// col.push_value(Value::Float64(2.718))?;
+/// col.push_value(Value::Float64(3.5)).unwrap();
+/// col.push_value(Value::Float64(2.71)).unwrap();
 /// assert_eq!(col.len(), 2);
 /// ```
 #[derive(Debug, Clone)]
@@ -430,7 +432,7 @@ impl FloatColumn {
     ///
     /// # Example
     /// ```rust
-    /// use crate::column::FloatColumn;
+    /// use mini_rust_olap::column::{Column, FloatColumn};
     ///
     /// let col = FloatColumn::new();
     /// assert_eq!(col.len(), 0);
@@ -534,12 +536,12 @@ impl Column for FloatColumn {
 /// # Example
 ///
 /// ```rust
-/// use crate::column::{Column, StringColumn};
-/// use crate::types::Value;
+/// use mini_rust_olap::column::{Column, StringColumn};
+/// use mini_rust_olap::types::Value;
 ///
 /// let mut col = StringColumn::new();
-/// col.push_value(Value::String("Hello".to_string()))?;
-/// col.push_value(Value::String("World".to_string()))?;
+/// col.push_value(Value::String("Hello".to_string())).unwrap();
+/// col.push_value(Value::String("World".to_string())).unwrap();
 /// assert_eq!(col.len(), 2);
 /// ```
 #[derive(Debug, Clone)]
@@ -556,7 +558,7 @@ impl StringColumn {
     ///
     /// # Example
     /// ```rust
-    /// use crate::column::StringColumn;
+    /// use mini_rust_olap::column::{Column, StringColumn};
     ///
     /// let col = StringColumn::new();
     /// assert_eq!(col.len(), 0);
@@ -660,8 +662,8 @@ impl Column for StringColumn {
 ///
 /// # Example
 /// ```rust
-/// use crate::column::{Column, create_column};
-/// use crate::types::DataType;
+/// use mini_rust_olap::column::{Column, create_column};
+/// use mini_rust_olap::types::DataType;
 ///
 /// let mut col = create_column(DataType::Int64);
 /// assert_eq!(col.data_type(), DataType::Int64);
@@ -818,10 +820,10 @@ mod tests {
     fn test_float_column_push_value() {
         let mut col = FloatColumn::new();
 
-        col.push_value(Value::Float64(3.14)).unwrap();
+        col.push_value(Value::Float64(3.5)).unwrap();
         assert_eq!(col.len(), 1);
 
-        col.push_value(Value::Float64(2.718)).unwrap();
+        col.push_value(Value::Float64(2.5)).unwrap();
         assert_eq!(col.len(), 2);
     }
 
@@ -837,14 +839,14 @@ mod tests {
     #[test]
     fn test_float_column_get() {
         let mut col = FloatColumn::new();
-        col.push_value(Value::Float64(3.14)).unwrap();
-        col.push_value(Value::Float64(2.718)).unwrap();
+        col.push_value(Value::Float64(3.5)).unwrap();
+        col.push_value(Value::Float64(2.5)).unwrap();
 
         let v1 = col.get(0).unwrap();
-        assert_eq!(v1, Value::Float64(3.14));
+        assert_eq!(v1, Value::Float64(3.5));
 
         let v2 = col.get(1).unwrap();
-        assert_eq!(v2, Value::Float64(2.718));
+        assert_eq!(v2, Value::Float64(2.5));
     }
 
     #[test]
@@ -990,7 +992,7 @@ mod tests {
         ];
 
         columns[0].push_value(Value::Int64(42)).unwrap();
-        columns[1].push_value(Value::Float64(3.14)).unwrap();
+        columns[1].push_value(Value::Float64(3.5)).unwrap();
         columns[2]
             .push_value(Value::String("test".to_string()))
             .unwrap();
