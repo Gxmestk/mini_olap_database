@@ -11,7 +11,7 @@
 //! - [`error`] - Comprehensive error handling and result types
 //! - [`types`] - Core data types (DataType, Value, etc.)
 //! - [`mod@column`] - Columnar storage implementation
-//! - \[`table`] - Table structure holding columns *(TODO)*
+//! - [`table`] - Table structure holding columns
 //! - \[`catalog`] - Metadata management for tables *(TODO)*
 //! - \[`ingest`] - CSV data ingestion *(TODO)*
 //! - \[`parser`] - SQL query parsing *(TODO)*
@@ -57,6 +57,7 @@
 // Re-export commonly used types
 pub use column::{create_column, Column, FloatColumn, IntColumn, StringColumn};
 pub use error::{DatabaseError, Result};
+pub use table::Table;
 pub use types::{DataType, Value};
 
 // ============================================================================
@@ -68,8 +69,8 @@ pub mod error;
 
 // TODO: Add module declarations as we implement them
 pub mod column;
+pub mod table;
 pub mod types;
-// pub mod table;
 // pub mod catalog;
 // pub mod ingest;
 // pub mod parser;

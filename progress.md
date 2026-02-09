@@ -86,20 +86,36 @@
 ---
 
 ## 🎯 Phase 2: Storage Layer (Table & Catalog)
-**Status:** ❌ Not Started  
+**Status:** 🟡 In Progress  
 **Estimated:** Week 3
 
 ### 2.1 Table Implementation
-- [ ] Create `src/table.rs`
-- [ ] Define `Table` struct
-  - [ ] Name
-  - [ ] Schema (column names + types)
-  - [ ] Collection of columns
-- [ ] Implement `add_column()`
-- [ ] Implement `get_column()`
-- [ ] Implement `row_count()`
-- [ ] Add schema validation
-- [ ] Write comprehensive tests
+- [x] Create `src/table.rs`
+- [x] Define `Table` struct
+  - [x] Name
+  - [x] Schema (column names + types)
+  - [x] Collection of columns
+- [x] Implement `add_column()`
+- [x] Implement `get_column()`
+- [x] Implement `row_count()`
+- [x] Add schema validation
+- [x] Write comprehensive tests
+
+**Milestone 2.1 Notes:**
+- ✅ Table struct created with name, column_index, columns, and schema fields
+- ✅ add_column() implemented with duplicate name and row count mismatch validation
+- ✅ get_column() and get_column_mut() implemented for column access
+- ✅ get_value() for accessing individual values
+- ✅ row_count() and column_count() for table statistics
+- ✅ column_names() for listing all columns
+- ✅ add_row() for inserting data rows
+- ✅ select_columns() for column projection
+- ✅ validate_schema() for data integrity checks
+- ✅ drop_column() for removing columns
+- ✅ Clone trait manually implemented
+- ✅ Display trait for pretty printing table info
+- ✅ 33 comprehensive tests covering all functionality
+- ✅ All tests passing (105 total tests)
 
 ### 2.2 Catalog Implementation
 - [ ] Create `src/catalog.rs`
