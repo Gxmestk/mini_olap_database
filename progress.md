@@ -113,28 +113,49 @@
 - ✅ validate_schema() for data integrity checks
 - ✅ drop_column() for removing columns
 - ✅ Clone trait manually implemented
-- ✅ Display trait for pretty printing table info
+- ✅ Display trait for pretty printing
 - ✅ 33 comprehensive tests covering all functionality
 - ✅ All tests passing (105 total tests)
 
 ### 2.2 Catalog Implementation
-- [ ] Create `src/catalog.rs`
-- [ ] Define `Catalog` struct
-  - [ ] Map of table name → Table
-- [ ] Implement `register_table()`
-- [ ] Implement `get_table()`
-- [ ] Implement `table_exists()`
-- [ ] Implement `list_tables()`
-- [ ] Add thread-safety considerations (optional)
-- [ ] Write tests
+- [x] Create `src/catalog.rs`
+- [x] Define `Catalog` struct
+  - [x] Map of table name → Table
+- [x] Implement `register_table()`
+- [x] Implement `get_table()`
+- [x] Implement `table_exists()`
+- [x] Implement `list_tables()`
+- [ ] Add thread-safety considerations (optional - skipped for now)
+- [x] Write tests
+
+**Milestone 2.2 Notes:**
+- ✅ Catalog struct created with HashMap<String, Table> for table management
+- ✅ register_table() implemented with duplicate name validation
+- ✅ get_table() and get_table_mut() implemented for table access
+- ✅ table_exists() for checking table presence
+- ✅ list_tables() and list_tables_sorted() for listing tables
+- ✅ drop_table() for removing tables
+- ✅ rename_table() for renaming tables
+- ✅ table_count() for catalog statistics
+- ✅ clear() for removing all tables
+- ✅ Clone and Display traits implemented
+- ✅ 25 comprehensive tests covering all functionality
+- ✅ All tests passing (130 total tests: 105 Phase 1 + 33 Table + 25 Catalog)
+- ✅ Updated lib.rs to export Catalog type
+
+---
 
 ### 2.3 Table Operations
-- [ ] Implement data insertion into tables
-- [ ] Implement table copying/clone
-- [ ] Add table statistics (row count, column count)
-- [ ] Write integration tests
+- [x] Implement data insertion into tables
+- [x] Implement table copying/clone
+- [x] Add table statistics (row count, column count)
+- [x] Write integration tests
 
-**Phase 2 Notes:**
+**Milestone 2.3 Notes:**
+- ✅ Data insertion: add_row() method in Table module accepts Vec<String> values
+- ✅ Table copying: Clone trait manually implemented for Table struct
+- ✅ Table statistics: row_count() and column_count() methods in Table struct
+- ✅ Integration tests: test_catalog_with_table_operations() validates full workflow
 
 ---
 

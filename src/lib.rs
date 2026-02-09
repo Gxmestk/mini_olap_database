@@ -12,7 +12,7 @@
 //! - [`types`] - Core data types (DataType, Value, etc.)
 //! - [`mod@column`] - Columnar storage implementation
 //! - [`table`] - Table structure holding columns
-//! - \[`catalog`] - Metadata management for tables *(TODO)*
+//! - [`catalog`] - Metadata management for tables
 //! - \[`ingest`] - CSV data ingestion *(TODO)*
 //! - \[`parser`] - SQL query parsing *(TODO)*
 //! - \[`execution`] - Query execution engine *(TODO)*
@@ -55,6 +55,7 @@
 //! - Systems programming concepts
 
 // Re-export commonly used types
+pub use catalog::Catalog;
 pub use column::{create_column, Column, FloatColumn, IntColumn, StringColumn};
 pub use error::{DatabaseError, Result};
 pub use table::Table;
@@ -68,10 +69,10 @@ pub use types::{DataType, Value};
 pub mod error;
 
 // TODO: Add module declarations as we implement them
+pub mod catalog;
 pub mod column;
 pub mod table;
 pub mod types;
-// pub mod catalog;
 // pub mod ingest;
 // pub mod parser;
 // pub mod execution;
