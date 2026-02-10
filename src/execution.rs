@@ -7,7 +7,7 @@
 
 use crate::column::Column;
 use crate::table::Table;
-use crate::types::DataType;
+use crate::types::{DataType, Value};
 use std::collections::HashMap;
 use std::fmt;
 use std::sync::Arc;
@@ -614,6 +614,392 @@ impl Operator for TableScan {
     }
 }
 
+// ============================================================================
+// PREDICATES AND FILTER OPERATOR
+// ============================================================================
+
+/// Trait for filter predicates that can be evaluated on batches.
+///
+/// Predicates are used by the Filter operator to determine which rows
+/// should be included in the output. Each predicate can be evaluated
+/// on a per-row basis.
+///
+/// # Example
+///
+/// ```rust
+/// use mini_rust_olap::execution::Predicate;
+/// use mini_rust_olap::execution::BinaryComparison;
+/// use mini_rust_olap::execution::ComparisonOp;
+/// use mini_rust_olap::types::Value;
+///
+/// // Create a predicate: column 0 equals 42
+/// let predicate = BinaryComparison::new(0, ComparisonOp::Equal, Value::Int64(42));
+/// ```
+pub trait Predicate: Send + Sync + std::fmt::Debug {
+    /// Evaluate the predicate on a specific row.
+    ///
+    /// # Arguments
+    ///
+    /// * `batch` - The batch containing the row
+    /// * `row_index` - The index of the row to evaluate
+    ///
+    /// # Returns
+    ///
+    /// `Ok(true)` if the row matches the predicate, `Ok(false)` otherwise
+    fn eval(&self, batch: &Batch, row_index: usize) -> Result<bool>;
+}
+
+/// Comparison operators for predicates
+#[derive(Debug, Clone)]
+pub enum ComparisonOp {
+    Equal,
+    NotEqual,
+    LessThan,
+    LessThanOrEqual,
+    GreaterThan,
+    GreaterThanOrEqual,
+}
+
+impl std::fmt::Display for ComparisonOp {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            ComparisonOp::Equal => write!(f, "="),
+            ComparisonOp::NotEqual => write!(f, "!="),
+            ComparisonOp::LessThan => write!(f, "<"),
+            ComparisonOp::LessThanOrEqual => write!(f, "<="),
+            ComparisonOp::GreaterThan => write!(f, ">"),
+            ComparisonOp::GreaterThanOrEqual => write!(f, ">="),
+        }
+    }
+}
+
+/// Binary comparison predicate: compare a column value to a constant.
+///
+/// This predicate compares the value in a specific column to a constant value
+/// using a comparison operator.
+///
+/// # Example
+///
+/// ```rust
+/// # use mini_rust_olap::execution::BinaryComparison;
+/// # use mini_rust_olap::execution::ComparisonOp;
+/// # use mini_rust_olap::types::Value;
+/// // Create: age > 30
+/// let predicate = BinaryComparison::new(2, ComparisonOp::GreaterThan, Value::Float64(30.0));
+/// ```
+#[derive(Debug, Clone)]
+pub struct BinaryComparison {
+    /// The column index to compare
+    column_index: usize,
+    /// The comparison operator
+    op: ComparisonOp,
+    /// The constant value to compare against
+    value: Value,
+}
+
+impl BinaryComparison {
+    /// Create a new binary comparison predicate.
+    ///
+    /// # Arguments
+    ///
+    /// * `column_index` - Index of the column to compare
+    /// * `op` - The comparison operator to use
+    /// * `value` - The constant value to compare against
+    pub fn new(column_index: usize, op: ComparisonOp, value: Value) -> Self {
+        Self {
+            column_index,
+            op,
+            value,
+        }
+    }
+}
+
+impl Predicate for BinaryComparison {
+    fn eval(&self, batch: &Batch, row_index: usize) -> Result<bool> {
+        let actual = batch.get(row_index, self.column_index)?;
+
+        match (&self.op, &actual, &self.value) {
+            // Equal
+            (ComparisonOp::Equal, Value::Int64(a), Value::Int64(b)) => Ok(a == b),
+            (ComparisonOp::Equal, Value::Float64(a), Value::Float64(b)) => Ok(a == b),
+            (ComparisonOp::Equal, Value::String(a), Value::String(b)) => Ok(a == b),
+
+            // NotEqual
+            (ComparisonOp::NotEqual, Value::Int64(a), Value::Int64(b)) => Ok(a != b),
+            (ComparisonOp::NotEqual, Value::Float64(a), Value::Float64(b)) => Ok(a != b),
+            (ComparisonOp::NotEqual, Value::String(a), Value::String(b)) => Ok(a != b),
+
+            // LessThan
+            (ComparisonOp::LessThan, Value::Int64(a), Value::Int64(b)) => Ok(a < b),
+            (ComparisonOp::LessThan, Value::Float64(a), Value::Float64(b)) => Ok(a < b),
+
+            // LessThanOrEqual
+            (ComparisonOp::LessThanOrEqual, Value::Int64(a), Value::Int64(b)) => Ok(a <= b),
+            (ComparisonOp::LessThanOrEqual, Value::Float64(a), Value::Float64(b)) => Ok(a <= b),
+
+            // GreaterThan
+            (ComparisonOp::GreaterThan, Value::Int64(a), Value::Int64(b)) => Ok(a > b),
+            (ComparisonOp::GreaterThan, Value::Float64(a), Value::Float64(b)) => Ok(a > b),
+
+            // GreaterThanOrEqual
+            (ComparisonOp::GreaterThanOrEqual, Value::Int64(a), Value::Int64(b)) => Ok(a >= b),
+            (ComparisonOp::GreaterThanOrEqual, Value::Float64(a), Value::Float64(b)) => Ok(a >= b),
+
+            // Type mismatch - for now, return false
+            _ => Ok(false),
+        }
+    }
+}
+
+/// Logical AND predicate: both sub-predicates must be true.
+///
+/// # Example
+///
+/// ```rust
+/// # use mini_rust_olap::execution::And;
+/// # use mini_rust_olap::execution::BinaryComparison;
+/// # use mini_rust_olap::execution::ComparisonOp;
+/// # use mini_rust_olap::types::Value;
+/// use std::sync::Arc;
+///
+/// // Create: age > 25 AND age < 50
+/// let pred1 = BinaryComparison::new(2, ComparisonOp::GreaterThan, Value::Float64(25.0));
+/// let pred2 = BinaryComparison::new(2, ComparisonOp::LessThan, Value::Float64(50.0));
+/// let predicate = And::new(Arc::new(pred1), Arc::new(pred2));
+/// ```
+#[derive(Debug)]
+pub struct And {
+    /// Left sub-predicate
+    left: Arc<dyn Predicate>,
+    /// Right sub-predicate
+    right: Arc<dyn Predicate>,
+}
+
+impl And {
+    /// Create a new AND predicate.
+    ///
+    /// # Arguments
+    ///
+    /// * `left` - The left sub-predicate
+    /// * `right` - The right sub-predicate
+    pub fn new(left: Arc<dyn Predicate>, right: Arc<dyn Predicate>) -> Self {
+        Self { left, right }
+    }
+}
+
+impl Predicate for And {
+    fn eval(&self, batch: &Batch, row_index: usize) -> Result<bool> {
+        let left_result = self.left.eval(batch, row_index)?;
+        if !left_result {
+            return Ok(false); // Short-circuit
+        }
+        self.right.eval(batch, row_index)
+    }
+}
+
+/// Logical OR predicate: at least one sub-predicate must be true.
+///
+/// # Example
+///
+/// ```rust
+/// # use mini_rust_olap::execution::Or;
+/// # use mini_rust_olap::execution::BinaryComparison;
+/// # use mini_rust_olap::execution::ComparisonOp;
+/// # use mini_rust_olap::types::Value;
+/// use std::sync::Arc;
+///
+/// // Create: age < 25 OR age > 65
+/// let pred1 = BinaryComparison::new(2, ComparisonOp::LessThan, Value::Float64(25.0));
+/// let pred2 = BinaryComparison::new(2, ComparisonOp::GreaterThan, Value::Float64(65.0));
+/// let predicate = Or::new(Arc::new(pred1), Arc::new(pred2));
+/// ```
+#[derive(Debug)]
+pub struct Or {
+    /// Left sub-predicate
+    left: Arc<dyn Predicate>,
+    /// Right sub-predicate
+    right: Arc<dyn Predicate>,
+}
+
+impl Or {
+    /// Create a new OR predicate.
+    ///
+    /// # Arguments
+    ///
+    /// * `left` - The left sub-predicate
+    /// * `right` - The right sub-predicate
+    pub fn new(left: Arc<dyn Predicate>, right: Arc<dyn Predicate>) -> Self {
+        Self { left, right }
+    }
+}
+
+impl Predicate for Or {
+    fn eval(&self, batch: &Batch, row_index: usize) -> Result<bool> {
+        let left_result = self.left.eval(batch, row_index)?;
+        if left_result {
+            return Ok(true); // Short-circuit
+        }
+        self.right.eval(batch, row_index)
+    }
+}
+
+/// Filter operator that filters rows based on a predicate.
+///
+/// Filter reads batches from its child operator and returns only the rows
+/// that match the predicate. It evaluates the predicate on each row and
+/// includes the row in the output if the predicate evaluates to true.
+///
+/// # Example
+///
+/// ```rust
+/// # use mini_rust_olap::execution::Filter;
+/// # use mini_rust_olap::execution::TableScan;
+/// # use mini_rust_olap::execution::BinaryComparison;
+/// # use mini_rust_olap::execution::ComparisonOp;
+/// # use mini_rust_olap::execution::Operator;
+/// # use mini_rust_olap::table::Table;
+/// # use mini_rust_olap::types::Value;
+/// use std::sync::Arc;
+///
+/// let table = Table::new("users".to_string());
+/// // ... add columns to table ...
+///
+/// let scan = TableScan::new(table);
+/// let predicate = BinaryComparison::new(
+///     2, // age column
+///     ComparisonOp::GreaterThan,
+///     Value::Float64(30.0)
+/// );
+/// let mut filter = Filter::new(Box::new(scan), Arc::new(predicate));
+///
+/// filter.open().unwrap();
+/// while let Some(batch) = filter.next_batch().unwrap() {
+///     // Process filtered batches
+/// }
+/// filter.close().unwrap();
+/// ```
+pub struct Filter {
+    /// The child operator to read data from
+    child: Box<dyn Operator>,
+
+    /// The predicate to evaluate on each row
+    predicate: Arc<dyn Predicate>,
+
+    /// Operator state
+    state: OperatorState,
+
+    /// Cached output schema
+    output_schema: Option<HashMap<String, DataType>>,
+}
+
+impl Filter {
+    /// Create a new Filter operator.
+    ///
+    /// # Arguments
+    ///
+    /// * `child` - The child operator to read data from
+    /// * `predicate` - The predicate to evaluate on each row
+    pub fn new(child: Box<dyn Operator>, predicate: Arc<dyn Predicate>) -> Self {
+        Filter {
+            child,
+            predicate,
+            state: OperatorState::NotOpen,
+            output_schema: None,
+        }
+    }
+}
+
+impl Operator for Filter {
+    fn open(&mut self) -> Result<()> {
+        if self.state == OperatorState::Open {
+            return Err(ExecutionError::OperatorAlreadyOpen);
+        }
+
+        // Open the child operator
+        self.child.open()?;
+
+        // Cache the child's schema as our output schema
+        self.output_schema = Some(self.child.schema()?);
+
+        self.state = OperatorState::Open;
+        Ok(())
+    }
+
+    fn next_batch(&mut self) -> Result<Option<Batch>> {
+        if self.state != OperatorState::Open {
+            return Err(ExecutionError::OperatorNotOpen);
+        }
+
+        // Get next batch from child
+        let batch = match self.child.next_batch()? {
+            Some(b) => b,
+            None => return Ok(None), // No more data
+        };
+
+        // If batch is empty, return it as-is
+        if batch.row_count() == 0 {
+            return Ok(Some(batch));
+        }
+
+        // Evaluate predicate on each row and collect matching rows
+        let mut matching_row_indices = Vec::new();
+        for row_idx in 0..batch.row_count() {
+            if self.predicate.eval(&batch, row_idx)? {
+                matching_row_indices.push(row_idx);
+            }
+        }
+
+        // If no rows match, continue to next batch
+        if matching_row_indices.is_empty() {
+            return self.next_batch(); // Recursively get next batch
+        }
+
+        // Create a new batch with only the matching rows
+        let mut filtered_columns = Vec::new();
+        let column_count = batch.column_count();
+
+        for col_idx in 0..column_count {
+            let original_column = batch.column(col_idx)?;
+            let original_values = original_column.slice(None);
+
+            // Filter the values
+            let filtered_values: Vec<Value> = matching_row_indices
+                .iter()
+                .map(|&row_idx| original_values[row_idx].clone())
+                .collect();
+
+            // Create a new column with filtered values
+            let data_type = original_column.data_type();
+            let mut filtered_column = crate::column::create_column(data_type);
+            for value in filtered_values {
+                filtered_column
+                    .push_value(value)
+                    .map_err(|e| ExecutionError::Custom(e.to_string()))?;
+            }
+
+            filtered_columns.push(filtered_column.into());
+        }
+
+        Ok(Some(Batch::new(filtered_columns)))
+    }
+
+    fn close(&mut self) -> Result<()> {
+        self.state = OperatorState::Closed;
+        self.child.close()?;
+        Ok(())
+    }
+
+    fn schema(&self) -> Result<HashMap<String, DataType>> {
+        self.output_schema
+            .clone()
+            .ok_or(ExecutionError::SchemaNotFound)
+    }
+
+    fn is_open(&self) -> bool {
+        self.state == OperatorState::Open
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -1161,6 +1547,436 @@ mod tests {
         assert!(batch.is_none());
 
         scan.close().unwrap();
+    }
+
+    // Predicate and Filter Operator Tests
+    #[test]
+    fn test_binary_comparison_equal() {
+        let table = create_test_table();
+        let mut scan = TableScan::new(table).with_batch_size(10);
+
+        scan.open().unwrap();
+
+        let batch = scan.next_batch().unwrap().unwrap();
+
+        // Test equals with integer
+        let pred = BinaryComparison::new(0, ComparisonOp::Equal, Value::Int64(1));
+        assert!(pred.eval(&batch, 0).unwrap()); // row 0, id=1
+        assert!(!pred.eval(&batch, 1).unwrap()); // row 1, id=2
+
+        // Test equals with string
+        let pred =
+            BinaryComparison::new(1, ComparisonOp::Equal, Value::String("Alice".to_string()));
+        assert!(pred.eval(&batch, 0).unwrap()); // row 0, name=Alice
+        assert!(!pred.eval(&batch, 1).unwrap()); // row 1, name=Bob
+
+        scan.close().unwrap();
+    }
+
+    #[test]
+    fn test_binary_comparison_not_equal() {
+        let table = create_test_table();
+        let mut scan = TableScan::new(table).with_batch_size(10);
+
+        scan.open().unwrap();
+
+        let batch = scan.next_batch().unwrap().unwrap();
+
+        // Test not equals with float
+        let pred = BinaryComparison::new(2, ComparisonOp::NotEqual, Value::Float64(25.0));
+        assert!(!pred.eval(&batch, 0).unwrap()); // row 0, age=25.0
+        assert!(pred.eval(&batch, 1).unwrap()); // row 1, age=30.0
+
+        scan.close().unwrap();
+    }
+
+    #[test]
+    fn test_binary_comparison_less_than() {
+        let table = create_test_table();
+        let mut scan = TableScan::new(table).with_batch_size(10);
+
+        scan.open().unwrap();
+
+        let batch = scan.next_batch().unwrap().unwrap();
+
+        // Test less than with integer
+        let pred = BinaryComparison::new(0, ComparisonOp::LessThan, Value::Int64(3));
+        assert!(pred.eval(&batch, 0).unwrap()); // row 0, id=1
+        assert!(pred.eval(&batch, 1).unwrap()); // row 1, id=2
+        assert!(!pred.eval(&batch, 2).unwrap()); // row 2, id=3
+
+        scan.close().unwrap();
+    }
+
+    #[test]
+    fn test_binary_comparison_greater_than() {
+        let table = create_test_table();
+        let mut scan = TableScan::new(table).with_batch_size(10);
+
+        scan.open().unwrap();
+
+        let batch = scan.next_batch().unwrap().unwrap();
+
+        // Test greater than with float
+        let pred = BinaryComparison::new(2, ComparisonOp::GreaterThan, Value::Float64(30.0));
+        assert!(!pred.eval(&batch, 0).unwrap()); // row 0, age=25.0
+        assert!(!pred.eval(&batch, 1).unwrap()); // row 1, age=30.0
+        assert!(pred.eval(&batch, 2).unwrap()); // row 2, age=35.0
+
+        scan.close().unwrap();
+    }
+
+    #[test]
+    fn test_binary_comparison_less_than_or_equal() {
+        let table = create_test_table();
+        let mut scan = TableScan::new(table).with_batch_size(10);
+
+        scan.open().unwrap();
+
+        let batch = scan.next_batch().unwrap().unwrap();
+
+        // Test less than or equal with integer
+        let pred = BinaryComparison::new(0, ComparisonOp::LessThanOrEqual, Value::Int64(2));
+        assert!(pred.eval(&batch, 0).unwrap()); // row 0, id=1
+        assert!(pred.eval(&batch, 1).unwrap()); // row 1, id=2
+        assert!(!pred.eval(&batch, 2).unwrap()); // row 2, id=3
+
+        scan.close().unwrap();
+    }
+
+    #[test]
+    fn test_binary_comparison_greater_than_or_equal() {
+        let table = create_test_table();
+        let mut scan = TableScan::new(table).with_batch_size(10);
+
+        scan.open().unwrap();
+
+        let batch = scan.next_batch().unwrap().unwrap();
+
+        // Test greater than or equal with float
+        let pred = BinaryComparison::new(2, ComparisonOp::GreaterThanOrEqual, Value::Float64(35.0));
+        assert!(!pred.eval(&batch, 0).unwrap()); // row 0, age=25.0
+        assert!(!pred.eval(&batch, 1).unwrap()); // row 1, age=30.0
+        assert!(pred.eval(&batch, 2).unwrap()); // row 2, age=35.0
+        assert!(pred.eval(&batch, 3).unwrap()); // row 3, age=40.0
+
+        scan.close().unwrap();
+    }
+
+    #[test]
+    fn test_comparison_op_display() {
+        assert_eq!(format!("{}", ComparisonOp::Equal), "=");
+        assert_eq!(format!("{}", ComparisonOp::NotEqual), "!=");
+        assert_eq!(format!("{}", ComparisonOp::LessThan), "<");
+        assert_eq!(format!("{}", ComparisonOp::LessThanOrEqual), "<=");
+        assert_eq!(format!("{}", ComparisonOp::GreaterThan), ">");
+        assert_eq!(format!("{}", ComparisonOp::GreaterThanOrEqual), ">=");
+    }
+
+    #[test]
+    fn test_and_predicate() {
+        let table = create_test_table();
+        let mut scan = TableScan::new(table).with_batch_size(10);
+
+        scan.open().unwrap();
+
+        let batch = scan.next_batch().unwrap().unwrap();
+
+        // Test: id > 1 AND id < 4
+        let pred1 = Arc::new(BinaryComparison::new(
+            0,
+            ComparisonOp::GreaterThan,
+            Value::Int64(1),
+        ));
+        let pred2 = Arc::new(BinaryComparison::new(
+            0,
+            ComparisonOp::LessThan,
+            Value::Int64(4),
+        ));
+        let and_pred = And::new(pred1, pred2);
+
+        assert!(!and_pred.eval(&batch, 0).unwrap()); // id=1 (not > 1)
+        assert!(and_pred.eval(&batch, 1).unwrap()); // id=2 (1 < 2 < 4)
+        assert!(and_pred.eval(&batch, 2).unwrap()); // id=3 (1 < 3 < 4)
+        assert!(!and_pred.eval(&batch, 3).unwrap()); // id=4 (not < 4)
+
+        scan.close().unwrap();
+    }
+
+    #[test]
+    fn test_or_predicate() {
+        let table = create_test_table();
+        let mut scan = TableScan::new(table).with_batch_size(10);
+
+        scan.open().unwrap();
+
+        let batch = scan.next_batch().unwrap().unwrap();
+
+        // Test: age < 30 OR age > 40
+        let pred1 = Arc::new(BinaryComparison::new(
+            2,
+            ComparisonOp::LessThan,
+            Value::Float64(30.0),
+        ));
+        let pred2 = Arc::new(BinaryComparison::new(
+            2,
+            ComparisonOp::GreaterThan,
+            Value::Float64(40.0),
+        ));
+        let or_pred = Or::new(pred1, pred2);
+
+        assert!(or_pred.eval(&batch, 0).unwrap()); // age=25.0 (< 30)
+        assert!(!or_pred.eval(&batch, 1).unwrap()); // age=30.0 (not < 30 and not > 40)
+        assert!(!or_pred.eval(&batch, 2).unwrap()); // age=35.0 (not < 30 and not > 40)
+        assert!(!or_pred.eval(&batch, 3).unwrap()); // age=40.0 (not < 30 and not > 40)
+        assert!(or_pred.eval(&batch, 4).unwrap()); // age=45.0 (> 40)
+
+        scan.close().unwrap();
+    }
+
+    #[test]
+    fn test_filter_simple() {
+        let table = create_test_table();
+        let scan = Box::new(TableScan::new(table).with_batch_size(10));
+
+        // Filter: age > 30
+        let predicate = Arc::new(BinaryComparison::new(
+            2,
+            ComparisonOp::GreaterThan,
+            Value::Float64(30.0),
+        ));
+
+        let mut filter = Filter::new(scan, predicate);
+
+        filter.open().unwrap();
+
+        let batch = filter.next_batch().unwrap();
+        assert!(batch.is_some());
+
+        let batch = batch.unwrap();
+        // Should only have rows with age > 30: rows 2, 3, 4 (ages 35, 40, 45)
+        assert_eq!(batch.row_count(), 3);
+        assert_eq!(batch.column_count(), 3);
+
+        // Verify first row (id=3, name=Charlie, age=35.0)
+        let val = batch.get(0, 0).unwrap();
+        assert_eq!(val, Value::Int64(3));
+
+        // Verify last row (id=5, name=Eve, age=45.0)
+        let val = batch.get(2, 0).unwrap();
+        assert_eq!(val, Value::Int64(5));
+
+        filter.close().unwrap();
+    }
+
+    #[test]
+    fn test_filter_with_and() {
+        let table = create_test_table();
+        let scan = Box::new(TableScan::new(table).with_batch_size(10));
+
+        // Filter: id >= 2 AND id <= 4
+        let pred1 = Arc::new(BinaryComparison::new(
+            0,
+            ComparisonOp::GreaterThanOrEqual,
+            Value::Int64(2),
+        ));
+        let pred2 = Arc::new(BinaryComparison::new(
+            0,
+            ComparisonOp::LessThanOrEqual,
+            Value::Int64(4),
+        ));
+        let predicate = Arc::new(And::new(pred1, pred2));
+
+        let mut filter = Filter::new(scan, predicate);
+
+        filter.open().unwrap();
+
+        let batch = filter.next_batch().unwrap().unwrap();
+        // Should have rows 1, 2, 3 (ids 2, 3, 4)
+        assert_eq!(batch.row_count(), 3);
+
+        filter.close().unwrap();
+    }
+
+    #[test]
+    fn test_filter_with_or() {
+        let table = create_test_table();
+        let scan = Box::new(TableScan::new(table).with_batch_size(10));
+
+        // Filter: name = "Alice" OR name = "Eve"
+        let pred1 = Arc::new(BinaryComparison::new(
+            1,
+            ComparisonOp::Equal,
+            Value::String("Alice".to_string()),
+        ));
+        let pred2 = Arc::new(BinaryComparison::new(
+            1,
+            ComparisonOp::Equal,
+            Value::String("Eve".to_string()),
+        ));
+        let predicate = Arc::new(Or::new(pred1, pred2));
+
+        let mut filter = Filter::new(scan, predicate);
+
+        filter.open().unwrap();
+
+        let batch = filter.next_batch().unwrap().unwrap();
+        // Should have rows 0 and 4 (Alice and Eve)
+        assert_eq!(batch.row_count(), 2);
+
+        let val = batch.get(0, 1).unwrap();
+        assert_eq!(val, Value::String("Alice".to_string()));
+
+        let val = batch.get(1, 1).unwrap();
+        assert_eq!(val, Value::String("Eve".to_string()));
+
+        filter.close().unwrap();
+    }
+
+    #[test]
+    fn test_filter_empty_result() {
+        let table = create_test_table();
+        let scan = Box::new(TableScan::new(table).with_batch_size(10));
+
+        // Filter: id > 100 (no rows match)
+        let predicate = Arc::new(BinaryComparison::new(
+            0,
+            ComparisonOp::GreaterThan,
+            Value::Int64(100),
+        ));
+
+        let mut filter = Filter::new(scan, predicate);
+
+        filter.open().unwrap();
+
+        let batch = filter.next_batch().unwrap();
+        // Should return None immediately since no rows match
+        assert!(batch.is_none());
+
+        filter.close().unwrap();
+    }
+
+    #[test]
+    fn test_filter_all_rows_pass() {
+        let table = create_test_table();
+        let scan = Box::new(TableScan::new(table).with_batch_size(10));
+
+        // Filter: id >= 1 (all rows pass)
+        let predicate = Arc::new(BinaryComparison::new(
+            0,
+            ComparisonOp::GreaterThanOrEqual,
+            Value::Int64(1),
+        ));
+
+        let mut filter = Filter::new(scan, predicate);
+
+        filter.open().unwrap();
+
+        let batch = filter.next_batch().unwrap().unwrap();
+        // Should have all 5 rows
+        assert_eq!(batch.row_count(), 5);
+
+        filter.close().unwrap();
+    }
+
+    #[test]
+    fn test_filter_multiple_batches() {
+        let table = create_test_large_table(2500);
+        let scan = Box::new(TableScan::new(table).with_batch_size(1000));
+
+        // Filter: id >= 1000 (only second and third batches)
+        let predicate = Arc::new(BinaryComparison::new(
+            0,
+            ComparisonOp::GreaterThanOrEqual,
+            Value::Int64(1000),
+        ));
+
+        let mut filter = Filter::new(scan, predicate);
+
+        filter.open().unwrap();
+
+        let mut total_rows = 0;
+        while let Some(batch) = filter.next_batch().unwrap() {
+            total_rows += batch.row_count();
+        }
+
+        // Should have 1500 rows (ids 1000-2499)
+        assert_eq!(total_rows, 1500);
+
+        filter.close().unwrap();
+    }
+
+    #[test]
+    fn test_filter_schema() {
+        let table = create_test_table();
+        let scan = Box::new(TableScan::new(table));
+
+        let predicate = Arc::new(BinaryComparison::new(
+            0,
+            ComparisonOp::GreaterThan,
+            Value::Int64(0),
+        ));
+
+        let mut filter = Filter::new(scan, predicate);
+
+        // Schema not available before open
+        assert!(filter.schema().is_err());
+
+        filter.open().unwrap();
+
+        // Schema should match child's schema
+        let schema = filter.schema().unwrap();
+        assert_eq!(schema.len(), 3);
+        assert_eq!(schema.get("id"), Some(&DataType::Int64));
+        assert_eq!(schema.get("name"), Some(&DataType::String));
+        assert_eq!(schema.get("age"), Some(&DataType::Float64));
+
+        filter.close().unwrap();
+    }
+
+    #[test]
+    fn test_filter_lifecycle() {
+        let table = create_test_table();
+        let scan = Box::new(TableScan::new(table));
+
+        let predicate = Arc::new(BinaryComparison::new(
+            0,
+            ComparisonOp::GreaterThan,
+            Value::Int64(2),
+        ));
+
+        let mut filter = Filter::new(scan, predicate);
+
+        assert!(!filter.is_open());
+
+        filter.open().unwrap();
+        assert!(filter.is_open());
+
+        // Get batches
+        while filter.next_batch().unwrap().is_some() {
+            // Keep consuming
+        }
+
+        filter.close().unwrap();
+        assert!(!filter.is_open());
+    }
+
+    #[test]
+    fn test_filter_next_batch_not_open() {
+        let table = create_test_table();
+        let scan = Box::new(TableScan::new(table));
+
+        let predicate = Arc::new(BinaryComparison::new(
+            0,
+            ComparisonOp::GreaterThan,
+            Value::Int64(0),
+        ));
+
+        let mut filter = Filter::new(scan, predicate);
+
+        let result = filter.next_batch();
+        assert!(result.is_err());
+        assert!(matches!(result, Err(ExecutionError::OperatorNotOpen)));
     }
 
     // Helper function to create a test table with sample data
