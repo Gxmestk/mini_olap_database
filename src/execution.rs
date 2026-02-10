@@ -328,8 +328,14 @@ impl fmt::Debug for Batch {
 ///         // Return output schema
 ///         Err(ExecutionError::Custom("Not implemented".into()))
 ///     }
+///
+///     fn column_names(&self) -> Result<Vec<String>> {
+///         // Return column names in order
+///         Err(ExecutionError::Custom("Not implemented".into()))
+///     }
 /// }
 /// ```
+
 pub trait Operator {
     /// Initialize the operator and allocate any necessary resources.
     ///
@@ -366,6 +372,12 @@ pub trait Operator {
     /// Returns the schema that will be produced by this operator.
     /// The schema should be valid after `open()` is called.
     fn schema(&self) -> Result<HashMap<String, DataType>>;
+
+    /// Get column names in order.
+    ///
+    /// Returns a vector of column names in the order they appear in the output.
+    /// This is important for operators like Project that need to preserve column order.
+    fn column_names(&self) -> Result<Vec<String>>;
 
     /// Check if the operator is currently open.
     fn is_open(&self) -> bool {
@@ -607,6 +619,27 @@ impl Operator for TableScan {
         self.output_schema
             .clone()
             .ok_or(ExecutionError::SchemaNotFound)
+    }
+
+    fn column_names(&self) -> Result<Vec<String>> {
+        if self.column_indices.is_empty() {
+            // No column pruning, return all column names in order
+            Ok(self.table.column_names())
+        } else {
+            // Return selected column names in the specified order
+            let all_names = self.table.column_names();
+            let mut selected_names = Vec::new();
+            for &index in &self.column_indices {
+                if index >= all_names.len() {
+                    return Err(ExecutionError::InvalidColumnIndex {
+                        index,
+                        count: all_names.len(),
+                    });
+                }
+                selected_names.push(all_names[index].clone());
+            }
+            Ok(selected_names)
+        }
     }
 
     fn is_open(&self) -> bool {
@@ -995,6 +1028,220 @@ impl Operator for Filter {
             .ok_or(ExecutionError::SchemaNotFound)
     }
 
+    fn column_names(&self) -> Result<Vec<String>> {
+        // Filter preserves column names and order from child
+        self.child.column_names()
+    }
+
+    fn is_open(&self) -> bool {
+        self.state == OperatorState::Open
+    }
+}
+
+/// The Project operator selects a subset of columns from its input.
+///
+/// This operator is used to implement the SQL SELECT clause, allowing queries to:
+/// - Select specific columns from a table
+/// - Reorder columns in the result set
+/// - Rename columns using aliases
+///
+/// # Example
+///
+/// ```ignore
+/// use mini_rust_olap::execution::{Operator, TableScan, Project};
+/// use mini_rust_olap::catalog::Catalog;
+///
+/// let catalog = Catalog::new();
+/// // Assume table with columns: id, name, age, salary
+///
+/// let scan = Box::new(TableScan::new(catalog.get_table("employees")?).unwrap());
+///
+/// // Select only name and salary, reorder them
+/// let project = Box::new(Project::new(scan, vec![1, 3]));
+/// ```
+pub struct Project {
+    /// The child operator to read data from
+    child: Box<dyn Operator>,
+
+    /// Indices of columns to project (from the child's schema)
+    column_indices: Vec<usize>,
+
+    /// Optional aliases for the projected columns
+    aliases: Option<Vec<String>>,
+
+    /// Operator state
+    state: OperatorState,
+
+    /// Cached output schema
+    output_schema: Option<HashMap<String, DataType>>,
+}
+
+impl Project {
+    /// Create a new Project operator.
+    ///
+    /// # Arguments
+    ///
+    /// * `child` - The child operator to read data from
+    /// * `column_indices` - Indices of columns to project
+    ///
+    /// # Example
+    ///
+    /// ```ignore
+    /// use mini_rust_olap::execution::{Operator, TableScan, Project};
+    ///
+    /// let scan = Box::new(TableScan::new(table).unwrap());
+    /// let project = Box::new(Project::new(scan, vec![0, 2]));
+    /// ```
+    pub fn new(child: Box<dyn Operator>, column_indices: Vec<usize>) -> Self {
+        Project {
+            child,
+            column_indices,
+            aliases: None,
+            state: OperatorState::NotOpen,
+            output_schema: None,
+        }
+    }
+
+    /// Set aliases for the projected columns.
+    ///
+    /// # Arguments
+    ///
+    /// * `aliases` - Names for the projected columns (must match length of column_indices)
+    ///
+    /// # Example
+    ///
+    /// ```ignore
+    /// use mini_rust_olap::execution::{Operator, TableScan, Project};
+    ///
+    /// let scan = Box::new(TableScan::new(table).unwrap());
+    /// let project = Box::new(
+    ///     Project::new(scan, vec![0, 2])
+    ///         .with_aliases(vec!["user_id".to_string(), "user_name".to_string()])
+    /// );
+    /// ```
+    pub fn with_aliases(mut self, aliases: Vec<String>) -> Self {
+        self.aliases = Some(aliases);
+        self
+    }
+}
+
+impl Operator for Project {
+    fn open(&mut self) -> Result<()> {
+        if self.state == OperatorState::Open {
+            return Err(ExecutionError::OperatorAlreadyOpen);
+        }
+
+        // Open the child operator
+        self.child.open()?;
+
+        // Build the output schema
+        let child_schema = self.child.schema()?;
+        let child_column_names = self.child.column_names()?;
+        let mut output_schema = HashMap::new();
+
+        for (i, &index) in self.column_indices.iter().enumerate() {
+            // Validate column index
+            if index >= child_column_names.len() {
+                return Err(ExecutionError::InvalidColumnIndex {
+                    index,
+                    count: child_column_names.len(),
+                });
+            }
+
+            let original_name = &child_column_names[index];
+            let data_type = child_schema[original_name];
+
+            // Determine output column name (use alias if provided)
+            let output_name = match &self.aliases {
+                Some(aliases) => {
+                    if i >= aliases.len() {
+                        return Err(ExecutionError::Custom(format!(
+                            "Not enough aliases provided: expected {}, got {}",
+                            self.column_indices.len(),
+                            aliases.len()
+                        )));
+                    }
+                    aliases[i].clone()
+                }
+                None => original_name.clone(),
+            };
+
+            // Check for duplicate column names
+            if output_schema.contains_key(&output_name) {
+                return Err(ExecutionError::Custom(format!(
+                    "Duplicate column name: {}",
+                    output_name
+                )));
+            }
+
+            output_schema.insert(output_name, data_type);
+        }
+
+        self.output_schema = Some(output_schema);
+        self.state = OperatorState::Open;
+        Ok(())
+    }
+
+    fn next_batch(&mut self) -> Result<Option<Batch>> {
+        if self.state != OperatorState::Open {
+            return Err(ExecutionError::OperatorNotOpen);
+        }
+
+        // Get next batch from child
+        let batch = match self.child.next_batch()? {
+            Some(b) => b,
+            None => return Ok(None), // No more data
+        };
+
+        // Project the selected columns
+        let mut projected_columns = Vec::new();
+
+        for &index in &self.column_indices {
+            let column = batch.column(index)?;
+            projected_columns.push(column);
+        }
+
+        Ok(Some(Batch::new(projected_columns)))
+    }
+
+    fn close(&mut self) -> Result<()> {
+        self.state = OperatorState::Closed;
+        self.child.close()?;
+        Ok(())
+    }
+
+    fn schema(&self) -> Result<HashMap<String, DataType>> {
+        self.output_schema
+            .clone()
+            .ok_or(ExecutionError::SchemaNotFound)
+    }
+
+    fn column_names(&self) -> Result<Vec<String>> {
+        // Rebuild column names from output schema to preserve order
+        let child_column_names = self.child.column_names()?;
+        let mut output_names = Vec::new();
+
+        for (i, &index) in self.column_indices.iter().enumerate() {
+            let original_name = &child_column_names[index];
+
+            // Use alias if provided, otherwise use original name
+            let output_name = match &self.aliases {
+                Some(aliases) => {
+                    if i < aliases.len() {
+                        aliases[i].clone()
+                    } else {
+                        original_name.clone()
+                    }
+                }
+                None => original_name.clone(),
+            };
+
+            output_names.push(output_name);
+        }
+
+        Ok(output_names)
+    }
+
     fn is_open(&self) -> bool {
         self.state == OperatorState::Open
     }
@@ -1264,6 +1511,12 @@ mod tests {
         fn schema(&self) -> Result<HashMap<String, DataType>> {
             Err(ExecutionError::Custom(
                 "Mock operator has no schema".to_string(),
+            ))
+        }
+
+        fn column_names(&self) -> Result<Vec<String>> {
+            Err(ExecutionError::Custom(
+                "Mock operator has no column names".to_string(),
             ))
         }
 
@@ -1978,6 +2231,340 @@ mod tests {
         assert!(result.is_err());
         assert!(matches!(result, Err(ExecutionError::OperatorNotOpen)));
     }
+    // ============================================================================
+    // PROJECT TESTS
+    // ============================================================================
+
+    #[test]
+    fn test_project_basic() {
+        let table = create_test_table();
+        let scan = Box::new(TableScan::new(table).with_batch_size(10));
+
+        // Project only id and name columns (indices 0 and 1)
+        let mut project = Box::new(Project::new(scan, vec![0, 1]));
+
+        project.open().unwrap();
+
+        let batch = project.next_batch().unwrap().unwrap();
+        assert_eq!(batch.row_count(), 5);
+        assert_eq!(batch.column_count(), 2);
+
+        // Verify column names
+        let schema = project.schema().unwrap();
+        assert_eq!(schema.len(), 2);
+        assert!(schema.contains_key("id"));
+        assert!(schema.contains_key("name"));
+
+        // Verify data
+        let val = batch.get(0, 0).unwrap();
+        assert_eq!(val, Value::Int64(1));
+        let val = batch.get(0, 1).unwrap();
+        assert_eq!(val, Value::String("Alice".to_string()));
+
+        // No more batches
+        assert!(project.next_batch().unwrap().is_none());
+
+        project.close().unwrap();
+    }
+
+    #[test]
+    fn test_project_with_aliases() {
+        let table = create_test_table();
+        let scan = Box::new(TableScan::new(table).with_batch_size(10));
+
+        // Project id and name with aliases
+        let mut project = Box::new(
+            Project::new(scan, vec![0, 1])
+                .with_aliases(vec!["user_id".to_string(), "user_name".to_string()]),
+        );
+
+        project.open().unwrap();
+
+        // Verify schema has aliased names
+        let schema = project.schema().unwrap();
+        assert_eq!(schema.len(), 2);
+        assert!(schema.contains_key("user_id"));
+        assert!(schema.contains_key("user_name"));
+        assert!(!schema.contains_key("id"));
+        assert!(!schema.contains_key("name"));
+
+        let batch = project.next_batch().unwrap().unwrap();
+        assert_eq!(batch.row_count(), 5);
+        assert_eq!(batch.column_count(), 2);
+
+        // Verify data is still accessible
+        let val = batch.get(0, 0).unwrap();
+        assert_eq!(val, Value::Int64(1));
+        let val = batch.get(0, 1).unwrap();
+        assert_eq!(val, Value::String("Alice".to_string()));
+
+        project.close().unwrap();
+    }
+
+    #[test]
+    fn test_project_column_reordering() {
+        let table = create_test_table();
+        let scan = Box::new(TableScan::new(table).with_batch_size(10));
+
+        // Project in reverse order: name, age, id
+        let mut project = Box::new(Project::new(scan, vec![1, 2, 0]));
+
+        project.open().unwrap();
+
+        let batch = project.next_batch().unwrap().unwrap();
+        assert_eq!(batch.row_count(), 5);
+        assert_eq!(batch.column_count(), 3);
+
+        // Verify column order
+        let columns = project.column_names().unwrap();
+        assert_eq!(columns, vec!["name", "age", "id"]);
+
+        // Verify data order
+        let val = batch.get(0, 0).unwrap();
+        assert_eq!(val, Value::String("Alice".to_string()));
+        let val = batch.get(0, 1).unwrap();
+        assert_eq!(val, Value::Float64(25.0));
+        let val = batch.get(0, 2).unwrap();
+        assert_eq!(val, Value::Int64(1));
+
+        project.close().unwrap();
+    }
+
+    #[test]
+    fn test_project_single_column() {
+        let table = create_test_table();
+        let scan = Box::new(TableScan::new(table).with_batch_size(10));
+
+        // Project only name column
+        let mut project = Box::new(Project::new(scan, vec![1]));
+
+        project.open().unwrap();
+
+        let batch = project.next_batch().unwrap().unwrap();
+        assert_eq!(batch.row_count(), 5);
+        assert_eq!(batch.column_count(), 1);
+
+        let schema = project.schema().unwrap();
+        assert_eq!(schema.len(), 1);
+        assert!(schema.contains_key("name"));
+
+        // Verify data
+        for i in 0..5 {
+            let val = batch.get(i, 0).unwrap();
+            assert!(matches!(val, Value::String(_)));
+        }
+
+        project.close().unwrap();
+    }
+
+    #[test]
+    fn test_project_invalid_column_index() {
+        let table = create_test_table();
+        let scan = Box::new(TableScan::new(table));
+
+        // Try to project column index 10 (out of range)
+        let mut project = Box::new(Project::new(scan, vec![10]));
+
+        let result = project.open();
+        assert!(result.is_err());
+        assert!(matches!(
+            result,
+            Err(ExecutionError::InvalidColumnIndex { .. })
+        ));
+    }
+
+    #[test]
+    fn test_project_insufficient_aliases() {
+        let table = create_test_table();
+        let scan = Box::new(TableScan::new(table));
+
+        // Provide only 1 alias for 2 columns
+        let mut project =
+            Box::new(Project::new(scan, vec![0, 1]).with_aliases(vec!["user_id".to_string()]));
+
+        let result = project.open();
+        assert!(result.is_err());
+        assert!(matches!(result, Err(ExecutionError::Custom(_))));
+    }
+
+    #[test]
+    fn test_project_duplicate_column_names() {
+        let table = create_test_table();
+        let scan = Box::new(TableScan::new(table));
+
+        // Create duplicate names via aliases
+        let mut project = Box::new(
+            Project::new(scan, vec![0, 1])
+                .with_aliases(vec!["col1".to_string(), "col1".to_string()]),
+        );
+
+        let result = project.open();
+        assert!(result.is_err());
+        assert!(matches!(result, Err(ExecutionError::Custom(_))));
+    }
+
+    #[test]
+    fn test_project_duplicate_original_names() {
+        let table = create_test_table();
+        let scan = Box::new(TableScan::new(table));
+
+        // Project id twice (without aliases)
+        let mut project = Box::new(Project::new(scan, vec![0, 0]));
+
+        let result = project.open();
+        assert!(result.is_err());
+        assert!(matches!(result, Err(ExecutionError::Custom(_))));
+    }
+
+    #[test]
+    fn test_project_schema() {
+        let table = create_test_table();
+        let scan = Box::new(TableScan::new(table));
+
+        let mut project = Box::new(Project::new(scan, vec![0, 2]));
+
+        // Schema not available before open
+        assert!(project.schema().is_err());
+
+        project.open().unwrap();
+
+        let schema = project.schema().unwrap();
+        assert_eq!(schema.len(), 2);
+        assert_eq!(schema.get("id"), Some(&DataType::Int64));
+        assert_eq!(schema.get("age"), Some(&DataType::Float64));
+        assert_eq!(schema.get("name"), None);
+
+        project.close().unwrap();
+    }
+
+    #[test]
+    fn test_project_lifecycle() {
+        let table = create_test_table();
+        let scan = Box::new(TableScan::new(table));
+
+        let mut project = Box::new(Project::new(scan, vec![0]));
+
+        assert!(!project.is_open());
+
+        project.open().unwrap();
+        assert!(project.is_open());
+
+        // Get batches
+        while project.next_batch().unwrap().is_some() {
+            // Keep consuming
+        }
+
+        project.close().unwrap();
+        assert!(!project.is_open());
+    }
+
+    #[test]
+    fn test_project_next_batch_not_open() {
+        let table = create_test_table();
+        let scan = Box::new(TableScan::new(table));
+
+        let mut project = Box::new(Project::new(scan, vec![0]));
+
+        let result = project.next_batch();
+        assert!(result.is_err());
+        assert!(matches!(result, Err(ExecutionError::OperatorNotOpen)));
+    }
+
+    #[test]
+    fn test_project_multiple_batches() {
+        let table = create_test_large_table(2500);
+        let scan = Box::new(TableScan::new(table).with_batch_size(1000));
+
+        let mut project = Box::new(Project::new(scan, vec![0, 1]));
+
+        project.open().unwrap();
+
+        let mut total_rows = 0;
+        let mut batch_count = 0;
+
+        while let Some(batch) = project.next_batch().unwrap() {
+            batch_count += 1;
+            total_rows += batch.row_count();
+            assert_eq!(batch.column_count(), 2);
+        }
+
+        assert_eq!(total_rows, 2500);
+        assert_eq!(batch_count, 3); // 1000 + 1000 + 500
+
+        project.close().unwrap();
+    }
+
+    #[test]
+    fn test_project_empty_table() {
+        let table = Table::new("empty".to_string());
+        let scan = Box::new(TableScan::new(table));
+
+        let mut project = Box::new(Project::new(scan, vec![]));
+
+        project.open().unwrap();
+
+        // Should get no batches
+        let batch = project.next_batch().unwrap();
+        assert!(batch.is_none());
+
+        project.close().unwrap();
+    }
+
+    #[test]
+    fn test_project_single_row_table() {
+        let mut table = Table::new("single".to_string());
+
+        let mut id_col = IntColumn::new();
+        id_col.push_value(Value::Int64(1)).unwrap();
+        table
+            .add_column("id".to_string(), Box::new(id_col))
+            .unwrap();
+
+        let mut name_col = StringColumn::new();
+        name_col
+            .push_value(Value::String("Single".to_string()))
+            .unwrap();
+        table
+            .add_column("name".to_string(), Box::new(name_col))
+            .unwrap();
+
+        let scan = Box::new(TableScan::new(table));
+        let mut project = Box::new(Project::new(scan, vec![1, 0]));
+
+        project.open().unwrap();
+
+        let batch = project.next_batch().unwrap().unwrap();
+        assert_eq!(batch.row_count(), 1);
+        assert_eq!(batch.column_count(), 2);
+
+        let val = batch.get(0, 0).unwrap();
+        assert_eq!(val, Value::String("Single".to_string()));
+        let val = batch.get(0, 1).unwrap();
+        assert_eq!(val, Value::Int64(1));
+
+        assert!(project.next_batch().unwrap().is_none());
+
+        project.close().unwrap();
+    }
+
+    #[test]
+    fn test_project_double_open() {
+        let table = create_test_table();
+        let scan = Box::new(TableScan::new(table));
+
+        let mut project = Box::new(Project::new(scan, vec![0]));
+
+        project.open().unwrap();
+        let result = project.open();
+        assert!(result.is_err());
+        assert!(matches!(result, Err(ExecutionError::OperatorAlreadyOpen)));
+
+        project.close().unwrap();
+    }
+
+    // ============================================================================
+    // HELPER FUNCTIONS
+    // ============================================================================
 
     // Helper function to create a test table with sample data
     fn create_test_table() -> Table {
