@@ -76,7 +76,7 @@ pub mod ingest;
 pub mod table;
 pub mod types;
 // pub mod parser;
-// pub mod execution;
+pub mod execution;
 // pub mod operators;
 // pub mod aggregates;
 
