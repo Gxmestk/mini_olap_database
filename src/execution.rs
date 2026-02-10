@@ -6,6 +6,7 @@
 //! Project, and GroupBy.
 
 use crate::column::Column;
+use crate::table::Table;
 use crate::types::DataType;
 use std::collections::HashMap;
 use std::fmt;
@@ -380,6 +381,239 @@ pub enum OperatorState {
     Closed,
 }
 
+/// TableScan operator for reading data from a table in batches.
+///
+/// TableScan reads data from a Table (typically from the catalog) and returns
+/// it in columnar batches. It supports column pruning, which means it only
+/// reads the columns that are needed for the query.
+///
+/// # Example
+///
+/// ```ignore
+/// use mini_rust_olap::execution::TableScan;
+/// use mini_rust_olap::table::Table;
+///
+/// let table = Table::new("users".to_string());
+/// // Add columns to table...
+///
+/// // Create a TableScan that reads all columns
+/// let scan = TableScan::new(table.clone());
+///
+/// // Or create a TableScan with column pruning (only read specific columns)
+/// let scan_pruned = TableScan::with_columns(
+///     table.clone(),
+///     vec![0, 2], // Only read columns 0 and 2
+/// );
+/// ```
+pub struct TableScan {
+    /// The table to scan data from
+    table: Table,
+
+    /// Indices of columns to read (column pruning)
+    /// If empty, read all columns
+    column_indices: Vec<usize>,
+
+    /// Current row position in the table
+    current_row: usize,
+
+    /// Total number of rows in the table
+    total_rows: usize,
+
+    /// Number of rows to return per batch
+    batch_size: usize,
+
+    /// Operator state
+    state: OperatorState,
+
+    /// Cached output schema
+    output_schema: Option<HashMap<String, DataType>>,
+}
+
+impl TableScan {
+    /// Create a new TableScan that reads all columns from the table.
+    ///
+    /// # Arguments
+    ///
+    /// * `table` - The table to scan
+    ///
+    /// # Example
+    ///
+    /// ```rust
+    /// # use mini_rust_olap::execution::TableScan;
+    /// # use mini_rust_olap::table::Table;
+    /// let table = Table::new("users".to_string());
+    /// let scan = TableScan::new(table);
+    /// ```
+    pub fn new(table: Table) -> Self {
+        let column_count = table.column_count();
+        let total_rows = table.row_count();
+
+        TableScan {
+            table,
+            column_indices: (0..column_count).collect(),
+            current_row: 0,
+            total_rows,
+            batch_size: 1024, // Default batch size
+            state: OperatorState::NotOpen,
+            output_schema: None,
+        }
+    }
+
+    /// Create a new TableScan that reads only specific columns (column pruning).
+    ///
+    /// This is useful when queries only need a subset of columns, as it
+    /// avoids reading unnecessary data.
+    ///
+    /// # Arguments
+    ///
+    /// * `table` - The table to scan
+    /// * `column_indices` - Indices of columns to read
+    ///
+    /// # Example
+    ///
+    /// ```rust
+    /// # use mini_rust_olap::execution::TableScan;
+    /// # use mini_rust_olap::table::Table;
+    /// let table = Table::new("users".to_string());
+    /// // Only read columns 0 and 2 (e.g., id and age)
+    /// let scan = TableScan::with_columns(table, vec![0, 2]);
+    /// ```
+    pub fn with_columns(table: Table, column_indices: Vec<usize>) -> Self {
+        let total_rows = table.row_count();
+
+        TableScan {
+            table,
+            column_indices,
+            current_row: 0,
+            total_rows,
+            batch_size: 1024,
+            state: OperatorState::NotOpen,
+            output_schema: None,
+        }
+    }
+
+    /// Set the batch size for this scan.
+    ///
+    /// Larger batch sizes can improve performance by reducing the number
+    /// of calls to `next_batch()`, but use more memory.
+    ///
+    /// # Arguments
+    ///
+    /// * `batch_size` - Number of rows per batch (must be > 0)
+    pub fn with_batch_size(mut self, batch_size: usize) -> Self {
+        if batch_size == 0 {
+            panic!("Batch size must be greater than 0");
+        }
+        self.batch_size = batch_size;
+        self
+    }
+}
+
+impl Operator for TableScan {
+    fn open(&mut self) -> Result<()> {
+        if self.state == OperatorState::Open {
+            return Err(ExecutionError::OperatorAlreadyOpen);
+        }
+
+        // Build output schema
+        let mut schema = HashMap::new();
+        let column_names = self.table.column_names();
+
+        for &col_idx in &self.column_indices {
+            if col_idx >= column_names.len() {
+                return Err(ExecutionError::InvalidColumnIndex {
+                    index: col_idx,
+                    count: column_names.len(),
+                });
+            }
+            let col_name = &column_names[col_idx];
+            let data_type = self
+                .table
+                .get_column_type(col_name)
+                .map_err(|e| ExecutionError::Custom(e.to_string()))?;
+            schema.insert(col_name.clone(), data_type);
+        }
+
+        self.output_schema = Some(schema);
+        self.state = OperatorState::Open;
+
+        Ok(())
+    }
+
+    fn next_batch(&mut self) -> Result<Option<Batch>> {
+        if self.state != OperatorState::Open {
+            return Err(ExecutionError::OperatorNotOpen);
+        }
+
+        // Check if we've read all rows
+        if self.current_row >= self.total_rows {
+            return Ok(None);
+        }
+
+        // Calculate the number of rows in this batch
+        let remaining_rows = self.total_rows - self.current_row;
+        let batch_rows = self.batch_size.min(remaining_rows);
+
+        // Build the batch columns
+        let mut batch_columns = Vec::new();
+
+        for &col_idx in &self.column_indices {
+            let column_names = self.table.column_names();
+            let col_name = &column_names[col_idx];
+
+            // Get the column and slice it for this batch
+            let column = self
+                .table
+                .get_column(col_name)
+                .map_err(|e| ExecutionError::Custom(e.to_string()))?;
+
+            let start_row = self.current_row;
+            let end_row = start_row + batch_rows;
+
+            // Get the sliced values and convert them back into a Column
+            let values = column.slice(Some(start_row..end_row));
+
+            // Create a new column of the appropriate type
+            let data_type = self
+                .table
+                .get_column_type(col_name)
+                .map_err(|e| ExecutionError::Custom(e.to_string()))?;
+
+            let mut batch_column = crate::column::create_column(data_type);
+            for value in values {
+                batch_column
+                    .push_value(value)
+                    .map_err(|e| ExecutionError::Custom(e.to_string()))?;
+            }
+
+            batch_columns.push(batch_column.into());
+        }
+
+        // Create the batch
+        let batch = Batch::new(batch_columns);
+
+        // Advance the row position
+        self.current_row += batch_rows;
+
+        Ok(Some(batch))
+    }
+
+    fn close(&mut self) -> Result<()> {
+        self.state = OperatorState::Closed;
+        Ok(())
+    }
+
+    fn schema(&self) -> Result<HashMap<String, DataType>> {
+        self.output_schema
+            .clone()
+            .ok_or(ExecutionError::SchemaNotFound)
+    }
+
+    fn is_open(&self) -> bool {
+        self.state == OperatorState::Open
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -681,5 +915,326 @@ mod tests {
         let result = op.next_batch();
         assert!(result.is_err());
         assert!(matches!(result, Err(ExecutionError::OperatorNotOpen)));
+    }
+
+    // TableScan Operator Tests
+    #[test]
+    fn test_table_scan_create() {
+        let table = create_test_table();
+        let scan = TableScan::new(table.clone());
+
+        assert_eq!(scan.total_rows, 5);
+        assert_eq!(scan.column_indices.len(), 3); // All columns
+        assert_eq!(scan.batch_size, 1024);
+    }
+
+    #[test]
+    fn test_table_scan_with_columns() {
+        let table = create_test_table();
+        let scan = TableScan::with_columns(table.clone(), vec![0, 2]);
+
+        assert_eq!(scan.column_indices, vec![0, 2]);
+        assert_eq!(scan.total_rows, 5);
+    }
+
+    #[test]
+    #[should_panic(expected = "Batch size must be greater than 0")]
+    fn test_table_scan_invalid_batch_size() {
+        let table = create_test_table();
+        let _scan = TableScan::new(table).with_batch_size(0);
+    }
+
+    #[test]
+    fn test_table_scan_lifecycle() {
+        let table = create_test_table();
+        let mut scan = TableScan::new(table);
+
+        assert!(!scan.is_open());
+
+        // Open
+        assert!(scan.open().is_ok());
+        assert!(scan.is_open());
+
+        // Get batches
+        let batch1 = scan.next_batch();
+        assert!(batch1.is_ok());
+        assert!(batch1.unwrap().is_some());
+
+        // Should return None after exhausting data
+        while scan.next_batch().unwrap().is_some() {
+            // Keep consuming batches
+        }
+
+        // Close
+        assert!(scan.close().is_ok());
+        assert!(!scan.is_open());
+    }
+
+    #[test]
+    fn test_table_scan_single_batch() {
+        let table = create_test_table();
+        let mut scan = TableScan::new(table).with_batch_size(10);
+
+        scan.open().unwrap();
+
+        let batch = scan.next_batch().unwrap();
+        assert!(batch.is_some());
+
+        let batch = batch.unwrap();
+        assert_eq!(batch.row_count(), 5);
+        assert_eq!(batch.column_count(), 3);
+
+        // Verify data
+        let val = batch.get(0, 0).unwrap();
+        assert_eq!(val, Value::Int64(1));
+
+        let val = batch.get(1, 1).unwrap();
+        assert_eq!(val, Value::String("Bob".to_string()));
+
+        let val = batch.get(2, 2).unwrap();
+        assert_eq!(val, Value::Float64(35.0));
+
+        // Next batch should be None
+        let batch = scan.next_batch().unwrap();
+        assert!(batch.is_none());
+
+        scan.close().unwrap();
+    }
+
+    #[test]
+    fn test_table_scan_multiple_batches() {
+        let table = create_test_large_table(2500); // 2500 rows
+        let mut scan = TableScan::new(table).with_batch_size(1000);
+
+        scan.open().unwrap();
+
+        let mut total_rows = 0;
+        let mut batch_count = 0;
+
+        loop {
+            let batch = scan.next_batch().unwrap();
+            if let Some(batch) = batch {
+                batch_count += 1;
+                total_rows += batch.row_count();
+            } else {
+                break;
+            }
+        }
+
+        assert_eq!(batch_count, 3); // 1000 + 1000 + 500 = 2500
+        assert_eq!(total_rows, 2500);
+
+        scan.close().unwrap();
+    }
+
+    #[test]
+    fn test_table_scan_column_pruning() {
+        let table = create_test_table();
+        let mut scan = TableScan::with_columns(table, vec![0, 2]); // Only id and age
+
+        scan.open().unwrap();
+
+        let batch = scan.next_batch().unwrap();
+        assert!(batch.is_some());
+
+        let batch = batch.unwrap();
+        assert_eq!(batch.column_count(), 2);
+        assert_eq!(batch.row_count(), 5);
+
+        // Verify we have the right columns
+        let val = batch.get(0, 0).unwrap();
+        assert_eq!(val, Value::Int64(1)); // id
+
+        let val = batch.get(0, 1).unwrap();
+        assert_eq!(val, Value::Float64(25.0)); // age
+
+        scan.close().unwrap();
+    }
+
+    #[test]
+    fn test_table_scan_schema() {
+        let table = create_test_table();
+        let mut scan = TableScan::new(table);
+
+        // Schema not available before open
+        assert!(scan.schema().is_err());
+
+        scan.open().unwrap();
+
+        let schema = scan.schema().unwrap();
+        assert_eq!(schema.len(), 3);
+        assert_eq!(schema.get("id"), Some(&DataType::Int64));
+        assert_eq!(schema.get("name"), Some(&DataType::String));
+        assert_eq!(schema.get("age"), Some(&DataType::Float64));
+
+        scan.close().unwrap();
+    }
+
+    #[test]
+    fn test_table_scan_pruned_schema() {
+        let table = create_test_table();
+        let mut scan = TableScan::with_columns(table, vec![0, 1]);
+
+        scan.open().unwrap();
+
+        let schema = scan.schema().unwrap();
+        assert_eq!(schema.len(), 2);
+        assert_eq!(schema.get("id"), Some(&DataType::Int64));
+        assert_eq!(schema.get("name"), Some(&DataType::String));
+        assert_eq!(schema.get("age"), None);
+
+        scan.close().unwrap();
+    }
+
+    #[test]
+    fn test_table_scan_invalid_column_index() {
+        let table = create_test_table();
+        let mut scan = TableScan::with_columns(table, vec![0, 5]); // Column 5 doesn't exist
+
+        let result = scan.open();
+        assert!(result.is_err());
+        assert!(matches!(
+            result,
+            Err(ExecutionError::InvalidColumnIndex { index: 5, count: 3 })
+        ));
+    }
+
+    #[test]
+    fn test_table_scan_next_batch_not_open() {
+        let table = create_test_table();
+        let mut scan = TableScan::new(table);
+
+        let result = scan.next_batch();
+        assert!(result.is_err());
+        assert!(matches!(result, Err(ExecutionError::OperatorNotOpen)));
+    }
+
+    #[test]
+    fn test_table_scan_double_open() {
+        let table = create_test_table();
+        let mut scan = TableScan::new(table);
+
+        scan.open().unwrap();
+        let result = scan.open();
+        assert!(result.is_err());
+        assert!(matches!(result, Err(ExecutionError::OperatorAlreadyOpen)));
+    }
+
+    #[test]
+    fn test_table_scan_empty_table() {
+        let table = Table::new("empty".to_string());
+        let mut scan = TableScan::new(table);
+
+        scan.open().unwrap();
+
+        let batch = scan.next_batch().unwrap();
+        assert!(batch.is_none());
+
+        scan.close().unwrap();
+    }
+
+    #[test]
+    fn test_table_scan_single_row_table() {
+        let mut table = Table::new("single_row".to_string());
+
+        let mut id_col = IntColumn::new();
+        id_col.push_value(Value::Int64(42)).unwrap();
+        table
+            .add_column("id".to_string(), Box::new(id_col))
+            .unwrap();
+
+        let mut scan = TableScan::new(table);
+
+        scan.open().unwrap();
+
+        let batch = scan.next_batch().unwrap();
+        assert!(batch.is_some());
+
+        let batch = batch.unwrap();
+        assert_eq!(batch.row_count(), 1);
+        assert_eq!(batch.column_count(), 1);
+
+        let val = batch.get(0, 0).unwrap();
+        assert_eq!(val, Value::Int64(42));
+
+        let batch = scan.next_batch().unwrap();
+        assert!(batch.is_none());
+
+        scan.close().unwrap();
+    }
+
+    // Helper function to create a test table with sample data
+    fn create_test_table() -> Table {
+        let mut table = Table::new("test".to_string());
+
+        // Add id column
+        let mut id_col = IntColumn::new();
+        for i in 1..=5 {
+            id_col.push_value(Value::Int64(i)).unwrap();
+        }
+        table
+            .add_column("id".to_string(), Box::new(id_col))
+            .unwrap();
+
+        // Add name column
+        let mut name_col = StringColumn::new();
+        name_col
+            .push_value(Value::String("Alice".to_string()))
+            .unwrap();
+        name_col
+            .push_value(Value::String("Bob".to_string()))
+            .unwrap();
+        name_col
+            .push_value(Value::String("Charlie".to_string()))
+            .unwrap();
+        name_col
+            .push_value(Value::String("David".to_string()))
+            .unwrap();
+        name_col
+            .push_value(Value::String("Eve".to_string()))
+            .unwrap();
+        table
+            .add_column("name".to_string(), Box::new(name_col))
+            .unwrap();
+
+        // Add age column
+        let mut age_col = FloatColumn::new();
+        age_col.push_value(Value::Float64(25.0)).unwrap();
+        age_col.push_value(Value::Float64(30.0)).unwrap();
+        age_col.push_value(Value::Float64(35.0)).unwrap();
+        age_col.push_value(Value::Float64(40.0)).unwrap();
+        age_col.push_value(Value::Float64(45.0)).unwrap();
+        table
+            .add_column("age".to_string(), Box::new(age_col))
+            .unwrap();
+
+        table
+    }
+
+    // Helper function to create a large test table
+    fn create_test_large_table(row_count: usize) -> Table {
+        let mut table = Table::new("large_test".to_string());
+
+        // Add id column
+        let mut id_col = IntColumn::new();
+        for i in 0..row_count {
+            id_col.push_value(Value::Int64(i as i64)).unwrap();
+        }
+        table
+            .add_column("id".to_string(), Box::new(id_col))
+            .unwrap();
+
+        // Add value column
+        let mut value_col = FloatColumn::new();
+        for i in 0..row_count {
+            value_col
+                .push_value(Value::Float64(i as f64 * 1.5))
+                .unwrap();
+        }
+        table
+            .add_column("value".to_string(), Box::new(value_col))
+            .unwrap();
+
+        table
     }
 }
