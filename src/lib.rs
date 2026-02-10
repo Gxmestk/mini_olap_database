@@ -14,7 +14,7 @@
 //! - [`table`] - Table structure holding columns
 //! - [`catalog`] - Metadata management for tables
 //! - [`ingest`] - CSV data ingestion
-//! - parser - SQL query parsing *(TODO)*
+//! - [`parser`] - SQL query parsing
 //! - [`execution`] - Query execution engine
 //! - [`aggregates`] - Aggregate functions
 //!
@@ -58,6 +58,7 @@ pub use catalog::Catalog;
 pub use column::{create_column, Column, FloatColumn, IntColumn, StringColumn};
 pub use error::{DatabaseError, Result};
 pub use ingest::{load_csv, load_csv_into_catalog};
+pub use parser::{Parser, Query, SelectStatement};
 pub use table::Table;
 pub use types::{DataType, Value};
 
@@ -69,14 +70,14 @@ pub use types::{DataType, Value};
 pub mod error;
 
 // TODO: Add module declarations as we implement them
+pub mod aggregates;
 pub mod catalog;
 pub mod column;
+pub mod execution;
 pub mod ingest;
+pub mod parser;
 pub mod table;
 pub mod types;
-// pub mod parser;
-pub mod aggregates;
-pub mod execution;
 
 // ============================================================================
 // VERSION INFORMATION
