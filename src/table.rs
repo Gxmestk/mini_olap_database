@@ -214,9 +214,16 @@ impl Table {
         &self.name
     }
 
-    /// Returns a slice of all column names.
+    /// Returns a slice of all column names in insertion order.
     pub fn column_names(&self) -> Vec<String> {
-        self.schema.keys().cloned().collect()
+        // Create a reverse mapping from index to column name
+        let mut index_to_name: Vec<Option<String>> = vec![None; self.columns.len()];
+        for (name, &index) in &self.column_index {
+            index_to_name[index] = Some(name.clone());
+        }
+
+        // Collect names in insertion order (indices 0, 1, 2, ...)
+        index_to_name.into_iter().flatten().collect()
     }
 
     /// Adds a row of values to the table.
