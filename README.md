@@ -4,8 +4,8 @@
 
 [![Rust](https://img.shields.io/badge/rust-1.70%2B-orange.svg)](https://www.rust-lang.org/)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Tests](https://img.shields.io/badge/tests-130%20passing-green.svg)]()
-[![Phase](https://img.shields.io/badge/phase-2%20complete-success.svg)]()
+[![Tests](https://img.shields.io/badge/tests-168%20passing-green.svg)]()
+[![Phase](https://img.shields.io/badge/phase-3%20complete-success.svg)]()
 
 **A lightweight, in-memory OLAP database engine built with Rust for educational purposes**
 
@@ -69,11 +69,17 @@ Unlike production databases that are complex and hard to understand, Mini Rust O
 - **Table Registry**: Central metadata repository for all tables
 - **Table Operations**: Register, retrieve, drop, and rename tables (25 tests)
 - **Query Support**: Check existence, list tables, and access metadata
-- **Integration**: Seamless table-catalog coordination (130 total tests)
+- **Integration**: Seamless table-catalog coordination
+
+#### 📄 CSV Ingestion (Phase 3)
+- **CSV Parsing**: Robust CSV file reading using csv crate
+- **Type Inference**: Automatic detection of Int64, Float64, and String types
+- **Data Loading**: Row-to-column transposition for efficient storage
+- **Error Handling**: Comprehensive error handling for malformed CSVs
+- **Integration**: Direct catalog registration with load_csv_into_catalog (38 tests)
 
 ### Planned Features (Roadmap)
 
-- [ ] Phase 3: CSV data ingestion with type inference
 - [ ] Phase 4: Physical query operators (Scan, Filter, Project, Aggregate)
 - [ ] Phase 5: SQL parser for SELECT statements
 - [ ] Phase 6: Query planning and optimization
@@ -298,6 +304,20 @@ cargo tarpaulin --out Html
   - 35 multiple-choice questions covering Phase 1 concepts
   - Comprehensive answer key with detailed explanations
   - Scoring guide and study recommendations
+
+#### Phase 3: CSV Ingestion
+
+✅ **Phase 3 Learning Guide** (`docs/phase3-learning-guide.md`) - 2,009 lines covering 11 chapters
+  - CSV parsing fundamentals and type inference algorithms
+  - Row-to-column transposition and data transformation
+  - Error handling strategies and testing approaches
+  - Advanced topics like streaming and parallel processing
+  - Self-assessment questions and practical exercises
+  
+✅ **Phase 3 Assessment** (`docs/phase3-assessment.md`) - 1,919 lines
+  - 45 multiple-choice questions covering CSV ingestion concepts
+  - Comprehensive answer key with detailed explanations
+  - Scoring guide and preparation checklist for Phase 4
   - Tests understanding of Rust patterns and database concepts
 
 #### Phase 2: Storage Layer
@@ -387,22 +407,24 @@ This project demonstrates:
 | Phase | Description | Status | Tests |
 |-------|-------------|--------|-------|
 | 1 | Foundation (Types, Columns) | ✅ Complete | 130 |
-| 2 | Storage Layer (Table, Catalog) | ✅ Complete | 55 |
-| 3 | CSV Ingestion | ❌ Not Started | - |
+| 2 | Storage Layer (Table, Catalog) | ✅ Complete | 58 |
+| 3 | CSV Ingestion | ✅ Complete | 38 |
 | 4 | Query Operators | ❌ Not Started | - |
 | 5 | SQL Parser | ❌ Not Started | - |
 | 6 | Query Planning | ❌ Not Started | - |
 | 7 | REPL Interface | ❌ Not Started | - |
 
+**Total Tests**: 226 (226 passing ✅)
+
 
 ### Module Status
 
-- ✅ `error` - Error handling complete (10 tests)
+- ✅ `error` - Error handling complete (11 tests)
 - ✅ `types` - Core types complete (26 tests)
 - ✅ `column` - Column implementations complete (33 tests)
 - ✅ `table` - Table structure complete (33 tests)
 - ✅ `catalog` - Metadata management complete (25 tests)
-- ❌ `ingest` - CSV ingestion
+- ✅ `ingest` - CSV ingestion complete (38 tests)
 - ❌ `parser` - SQL parsing
 - ❌ `execution` - Query execution
 - ❌ `operators` - Physical operators
