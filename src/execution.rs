@@ -335,7 +335,6 @@ impl fmt::Debug for Batch {
 ///     }
 /// }
 /// ```
-
 pub trait Operator {
     /// Initialize the operator and allocate any necessary resources.
     ///
