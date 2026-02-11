@@ -190,8 +190,8 @@ fn parse_value(value: &str, target_type: DataType) -> Result<Value> {
 ///
 /// # Returns
 ///
-/// A tuple of (headers, rows) where headers is a Vec<String> of column names
-/// and rows is a Vec<Vec<String>> of data rows
+/// A tuple of (headers, rows) where headers is a `Vec<String>` of column names
+/// and rows is a `Vec<Vec<String>>` of data rows
 ///
 /// # Errors
 ///
