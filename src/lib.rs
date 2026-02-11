@@ -59,6 +59,7 @@ pub use column::{create_column, Column, FloatColumn, IntColumn, StringColumn};
 pub use error::{DatabaseError, Result};
 pub use ingest::{load_csv, load_csv_into_catalog};
 pub use parser::{Parser, Query, SelectStatement};
+pub use planner::{PlanResult, Planner, PlannerError, QueryPlanner};
 pub use table::Table;
 pub use types::{DataType, Value};
 
@@ -76,6 +77,7 @@ pub mod column;
 pub mod execution;
 pub mod ingest;
 pub mod parser;
+pub mod planner;
 pub mod table;
 pub mod types;
 

@@ -771,18 +771,38 @@ impl Predicate for BinaryComparison {
             // LessThan
             (ComparisonOp::LessThan, Value::Int64(a), Value::Int64(b)) => Ok(a < b),
             (ComparisonOp::LessThan, Value::Float64(a), Value::Float64(b)) => Ok(a < b),
+            // LessThan with type conversion (Int64 <-> Float64)
+            (ComparisonOp::LessThan, Value::Float64(a), Value::Int64(b)) => Ok(*a < (*b as f64)),
+            (ComparisonOp::LessThan, Value::Int64(a), Value::Float64(b)) => Ok((*a as f64) < *b),
 
             // LessThanOrEqual
             (ComparisonOp::LessThanOrEqual, Value::Int64(a), Value::Int64(b)) => Ok(a <= b),
             (ComparisonOp::LessThanOrEqual, Value::Float64(a), Value::Float64(b)) => Ok(a <= b),
+            // LessThanOrEqual with type conversion (Int64 <-> Float64)
+            (ComparisonOp::LessThanOrEqual, Value::Float64(a), Value::Int64(b)) => {
+                Ok(*a <= (*b as f64))
+            }
+            (ComparisonOp::LessThanOrEqual, Value::Int64(a), Value::Float64(b)) => {
+                Ok((*a as f64) <= *b)
+            }
 
             // GreaterThan
             (ComparisonOp::GreaterThan, Value::Int64(a), Value::Int64(b)) => Ok(a > b),
             (ComparisonOp::GreaterThan, Value::Float64(a), Value::Float64(b)) => Ok(a > b),
+            // GreaterThan with type conversion (Int64 <-> Float64)
+            (ComparisonOp::GreaterThan, Value::Float64(a), Value::Int64(b)) => Ok(*a > (*b as f64)),
+            (ComparisonOp::GreaterThan, Value::Int64(a), Value::Float64(b)) => Ok((*a as f64) > *b),
 
             // GreaterThanOrEqual
             (ComparisonOp::GreaterThanOrEqual, Value::Int64(a), Value::Int64(b)) => Ok(a >= b),
             (ComparisonOp::GreaterThanOrEqual, Value::Float64(a), Value::Float64(b)) => Ok(a >= b),
+            // GreaterThanOrEqual with type conversion (Int64 <-> Float64)
+            (ComparisonOp::GreaterThanOrEqual, Value::Float64(a), Value::Int64(b)) => {
+                Ok(*a >= (*b as f64))
+            }
+            (ComparisonOp::GreaterThanOrEqual, Value::Int64(a), Value::Float64(b)) => {
+                Ok((*a as f64) >= *b)
+            }
 
             // Type mismatch - for now, return false
             _ => Ok(false),
