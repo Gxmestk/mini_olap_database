@@ -52,8 +52,10 @@ impl Clone for Table {
     fn clone(&self) -> Self {
         let mut new_table = Table::new(self.name.clone());
 
-        for (name, data_type) in &self.schema {
-            let index = self.column_index.get(name).unwrap();
+        // Iterate over column names in insertion order, not schema (HashMap order is non-deterministic)
+        for name in self.column_names() {
+            let data_type = self.schema.get(&name).unwrap();
+            let index = self.column_index.get(&name).unwrap();
             let original_column = &self.columns[*index];
             let cloned_column = original_column.slice(Some(0..original_column.len()));
 
@@ -216,14 +218,13 @@ impl Table {
 
     /// Returns a slice of all column names in insertion order.
     pub fn column_names(&self) -> Vec<String> {
-        // Create a reverse mapping from index to column name
-        let mut index_to_name: Vec<Option<String>> = vec![None; self.columns.len()];
-        for (name, &index) in &self.column_index {
-            index_to_name[index] = Some(name.clone());
-        }
-
-        // Collect names in insertion order (indices 0, 1, 2, ...)
-        index_to_name.into_iter().flatten().collect()
+        let mut name_index_pairs: Vec<(String, usize)> = self
+            .column_index
+            .iter()
+            .map(|(name, &index)| (name.clone(), index))
+            .collect();
+        name_index_pairs.sort_by(|a, b| a.1.cmp(&b.1));
+        name_index_pairs.into_iter().map(|(name, _)| name).collect()
     }
 
     /// Adds a row of values to the table.
