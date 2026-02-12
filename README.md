@@ -906,7 +906,7 @@ cargo tarpaulin --out Html
 - Pre-commit hook with comprehensive checks (formatting, linting, tests, documentation)
 - Pre-push hook with extended validation
 - Automated quality assurance pipeline
-- 998 lines of automation code
+- 879 lines of automation code
 
 ✅ **Code Review Workflow** (`docs/code-review-workflow.md`) - 2,590 lines
   - Complete guide to Pull Requests and code reviews
@@ -1032,6 +1032,7 @@ mini_rust_olap/
 │   ├── manual_query.rs      # Manual query integration tests
 │   └── integration_tests.rs # Operator chain integration tests
 ├── scripts/                 # Shell scripts for testing and automation
+│   ├── setup-ci-hooks.sh    # CI/CD git hooks installation script
 │   ├── test_repl.sh         # Comprehensive REPL testing
 │   ├── test_repl_simple.sh  # Basic REPL testing
 │   └── final_test.sh        # Final integration testing
@@ -1047,6 +1048,8 @@ mini_rust_olap/
 │       ├── progress.md      # Development tracking
 │       └── REORGANIZATION_SUMMARY.md
 ├── .githooks/               # Git hooks for CI/CD
+│   ├── pre-commit           # Pre-commit checks (fmt, clippy, tests, docs)
+│   └── pre-push             # Pre-push checks (debug + release modes, coverage)
 ├── Cargo.toml               # Dependencies
 ├── Cargo.lock               # Dependency lock file
 ├── README.md                # This file ✅
@@ -1107,6 +1110,48 @@ cargo build
 cargo test
 cargo bench
 ```
+### CI/CD Git Hooks
+
+The project includes comprehensive git hooks to ensure code quality before commits and pushes. These hooks are automatically installed using the setup script.
+
+**Pre-commit Hook:**
+- Checks code formatting with `cargo fmt`
+- Runs linter checks with `cargo clippy`
+- Verifies compilation with `cargo check`
+- Builds documentation with `cargo doc`
+- Runs all unit tests
+- Runs all integration tests
+
+**Pre-push Hook:**
+- All pre-commit checks plus:
+- Compilation checks in both debug and release modes
+- All tests in both debug and release modes
+- Validates generated files (Cargo.lock, target/)
+- Optional code coverage check (if cargo-tarpaulin installed)
+- Verifies README examples
+- Checks documentation completeness
+- Warns about TODO/FIXME comments in staged files
+
+**Installing Git Hooks:**
+```bash
+# Install git hooks (recommended for development)
+chmod +x scripts/setup-ci-hooks.sh
+./scripts/setup-ci-hooks.sh
+
+# Check hook status
+./scripts/setup-ci-hooks.sh --check
+
+# Uninstall hooks (if needed)
+./scripts/setup-ci-hooks.sh --uninstall
+```
+
+**Benefits:**
+- Catch issues early in the development cycle
+- Maintain consistent code quality across the team
+- Automated testing prevents broken commits
+- Comprehensive validation before pushing to remote
+- Reduces CI/CD pipeline failures
+
 ### Development Workflow
 
 ```bash
