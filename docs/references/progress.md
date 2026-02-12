@@ -1013,7 +1013,7 @@ The following items could be addressed in future updates:
   - Time estimates for each section
 
 ### Phase 8 Learning Guide
-- **File**: `docs/sessions/phase8/learning_guide.md` (2,371 lines)
+- **File**: `docs/phase8-learning-guide.md` (2,371 lines)
 - **Chapters**: 12 comprehensive sections
 - **Content**:
   - Overview and Learning Objectives for Phase 8
@@ -1032,7 +1032,7 @@ The following items could be addressed in future updates:
 - **Examples**: 4 comprehensive practical examples covering documentation, testing, benchmarking, and property-based testing
 
 ### Phase 8 Assessment
-- **File**: `docs/sessions/phase8/assessment.md` (447 lines)
+- **File**: `docs/phase8-assessment.md` (447 lines)
 - **Questions**: 45 questions across 5 sections
 - **Sections**:
   * Section 1: API Documentation (10 questions)
