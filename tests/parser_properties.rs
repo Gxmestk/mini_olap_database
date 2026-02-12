@@ -60,7 +60,7 @@ fn arb_select_with_order() -> impl Strategy<Value = String> {
             Just(table.clone()),
             arb_column_name(),
             arb_column_name(),
-            prop::sample::select(vec!["ASC", "DESC"]),
+            prop_oneof![Just("ASC"), Just("DESC")],
         )
             .prop_map(|(table, col1, col2, dir)| {
                 format!("SELECT {} FROM {} ORDER BY {} {}", col1, table, col2, dir)
@@ -75,7 +75,13 @@ fn arb_select_with_groupby() -> impl Strategy<Value = String> {
             Just(table.clone()),
             arb_column_name(),
             arb_column_name(),
-            prop::sample::select(vec!["COUNT", "SUM", "AVG", "MIN", "MAX"]),
+            prop_oneof![
+                Just("COUNT"),
+                Just("SUM"),
+                Just("AVG"),
+                Just("MIN"),
+                Just("MAX")
+            ],
         )
             .prop_map(|(table, group_col, agg_col, agg_func)| {
                 format!(
@@ -94,8 +100,8 @@ fn arb_complex_select() -> impl Strategy<Value = String> {
             arb_column_name(),
             arb_column_name(),
             0i64..1000i64,
-            prop::sample::select(vec!["COUNT", "SUM"]),
-            prop::sample::select(vec!["ASC", "DESC"]),
+            prop_oneof![Just("COUNT"), Just("SUM")],
+            prop_oneof![Just("ASC"), Just("DESC")],
             0..2u8, // 0 = no ORDER BY, 1 = with ORDER BY
         )
             .prop_map(|(table, col1, col2, value, agg, dir, add_order)| {
@@ -237,7 +243,7 @@ fn prop_unique_column_names() {
         // Ensure columns are unique
         let mut seen = std::collections::HashSet::new();
         let unique_cols: Vec<_> = cols.into_iter()
-            .filter(|c| seen.insert(c.clone()))
+            .filter(|c| seen.insert(c.to_owned()))
             .collect();
 
         let col_list = unique_cols.join(", ");
@@ -255,7 +261,7 @@ fn prop_group_by_columns_valid() {
         table in arb_table_name(),
         group_col in arb_column_name(),
         agg_col in arb_column_name(),
-        agg_func in prop::sample::select(vec!["COUNT", "SUM", "AVG", "MIN", "MAX"])
+        agg_func in prop_oneof![Just("COUNT"), Just("SUM"), Just("AVG"), Just("MIN"), Just("MAX")]
     )| {
         let query = format!(
             "SELECT {}, {}({}) FROM {} GROUP BY {}",
@@ -318,8 +324,8 @@ fn prop_double_order_by() {
         table in arb_table_name(),
         col1 in arb_column_name(),
         col2 in arb_column_name(),
-        dir1 in prop::sample::select(vec!["ASC", "DESC"]),
-        dir2 in prop::sample::select(vec!["ASC", "DESC"])
+        dir1 in prop_oneof![Just("ASC"), Just("DESC")],
+        dir2 in prop_oneof![Just("ASC"), Just("DESC")]
     )| {
         let query = format!(
             "SELECT {}, {} FROM {} ORDER BY {} {} ORDER BY {} {}",
