@@ -1376,7 +1376,7 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 ## 📊 Project Statistics
 
 - **Lines of Code**: 11,200 (comprehensive implementation)
-- **Test Count**: 443 passing tests (high test coverage)
+- **Test Count**: 499 passing tests (high test coverage)
 - **Number of Modules**: 10 implemented (error, types, column, table, catalog, ingest, parser, execution, aggregates, lib)
 - **Dependencies**: 8 (minimal for learning purposes)
 - **Build Time**: ~3 seconds (optimized for fast iteration)
