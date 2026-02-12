@@ -727,20 +727,20 @@ cargo tarpaulin --out Html
 
 #### Phase 1: Foundation
 
-✅ **Phase 1 Learning Guide** (`docs/phase1-learning-guide.md`) - 2,668 lines covering 10 chapters
+✅ **Phase 1 Learning Guide** (`docs/guide/phase1-learning-guide.md`) - 2,667 lines covering 10 chapters
   - Rust programming fundamentals and best practices
   - Database internals and column-oriented storage
   - Code examples with detailed explanations
   - Self-assessment questions and exercises
   
-✅ **Phase 1 Assessment** (`docs/phase1-assessment.md`) - 431 lines
+✅ **Phase 1 Assessment** (`docs/assessment/phase1-assessment.md`) - 431 lines
   - 35 multiple-choice questions covering Phase 1 concepts
   - Comprehensive answer key with detailed explanations
   - Scoring guide and study recommendations
 
 #### Phase 2: Storage Layer
 
-✅ **Phase 2 Learning Guide** (`docs/phase2-learning-guide.md`) - Comprehensive guide covering:
+✅ **Phase 2 Learning Guide** (`docs/guide/phase2-learning-guide.md`) - 1,546 lines covering:
   - Table design fundamentals and data organization
   - HashMap and collections in Rust for efficient lookups
   - Advanced trait implementations and type safety
@@ -750,7 +750,7 @@ cargo tarpaulin --out Html
   - Testing strategies for storage layer components
   - Integration and modularity best practices
 
-✅ **Phase 2 Assessment** (`docs/phase2-assessment.md`)
+✅ **Phase 2 Assessment** (`docs/assessment/phase2-assessment.md`) - 484 lines
   - 35 multiple-choice questions across 4 parts
   - Topics: Rust fundamentals, Table operations, Catalog management, Advanced topics
   - Comprehensive answer key with detailed explanations
@@ -758,14 +758,14 @@ cargo tarpaulin --out Html
 
 #### Phase 3: CSV Ingestion
 
-✅ **Phase 3 Learning Guide** (`docs/phase3-learning-guide.md`) - 2,009 lines covering 11 chapters
+✅ **Phase 3 Learning Guide** (`docs/guide/phase3-learning-guide.md`) - 2,009 lines covering 11 chapters
   - CSV parsing fundamentals and type inference algorithms
   - Row-to-column transposition and data transformation
   - Error handling strategies and testing approaches
   - Advanced topics like streaming and parallel processing
   - Self-assessment questions and practical exercises
   
-✅ **Phase 3 Assessment** (`docs/phase3-assessment.md`) - 1,919 lines
+✅ **Phase 3 Assessment** (`docs/assessment/phase3-assessment.md`) - 1,919 lines
   - 45 multiple-choice questions covering CSV ingestion concepts
   - Comprehensive answer key with detailed explanations
   - Scoring guide and preparation checklist for Phase 4
@@ -773,7 +773,7 @@ cargo tarpaulin --out Html
 
 #### Phase 4: Query Execution Engine
 
-✅ **Phase 4 Learning Guide** (`docs/phase4-learning-guide.md`) - 2,895 lines covering:
+✅ **Phase 4 Learning Guide** (`docs/guide/phase4-learning-guide.md`) - 2,895 lines covering:
   - Query execution foundation and vectorized processing
   - TableScan operator with column pruning and batch sizing
   - Filter operator with predicate system (BinaryComparison, AND, OR)
@@ -787,7 +787,7 @@ cargo tarpaulin --out Html
   - Practical exercises (Limit, Distinct, Variance, Streaming GroupBy)
   - Appendices (code summary, benchmarks, common errors, glossary)
 
-✅ **Phase 4 Assessment** (`docs/phase4-assessment.md`) - 1,220 lines
+✅ **Phase 4 Assessment** (`docs/assessment/phase4-assessment.md`) - 1,220 lines
   - 75 multiple-choice questions across 8 parts covering all Phase 4 topics
   - Complete answer key with explanations for each question
   - Scoring guide (70% passing threshold)
@@ -798,7 +798,7 @@ cargo tarpaulin --out Html
 
 #### Phase 5: SQL Parser
 
-✅ **Phase 5 Learning Guide** (`docs/phase5-learning-guide.md`) - 2,170 lines covering:
+✅ **Phase 5 Learning Guide** (`docs/guide/phase5-learning-guide.md`) - 2,170 lines covering:
   - Introduction to SQL parsing and its role in database systems
   - Tokenizer/Lexer design with 20+ token types
   - Abstract Syntax Tree (AST) design principles
@@ -812,7 +812,7 @@ cargo tarpaulin --out Html
   - Learning outcomes and self-assessment questions
   - 15 practical exercises (beginner, intermediate, advanced)
 
-✅ **Phase 5 Assessment** (`docs/phase5-assessment.md`) - 785 lines
+✅ **Phase 5 Assessment** (`docs/assessment/phase5-assessment.md`) - 785 lines
   - 67 multiple-choice questions across 9 parts
   - Parts: Tokenizer/Lexer Fundamentals, AST Design, Recursive Descent Parsing, Expression Parsing, SQL Clauses, Aggregate Functions, Error Handling, Testing Strategies, Advanced Topics
   - Complete answer key with detailed explanations
@@ -821,7 +821,30 @@ cargo tarpaulin --out Html
 
 #### Phase 6: Query Planning & Advanced Features
 
-✅ **Phase 6.2 Learning Guide** (`phase6_2-learning-guide.md`) - 1,108 lines covering:
+✅ **Phase 6.1 Learning Guide** (`docs/guide/phase6_1-learning-guide.md`) - 1,155 lines covering:
+  - Query Planning Fundamentals
+  - Architecture Overview
+  - Key Components
+  - Implementation Details
+  - Predicate Evaluation
+  - Aggregate Functions
+  - Operator Ordering
+  - Column Pruning
+  - Type Conversion
+  - Testing Strategy
+  - Common Pitfalls
+  - Best Practices
+  - 12 comprehensive sections covering all aspects of Phase 6.1
+
+✅ **Phase 6.1 Assessment** (`docs/assessment/phase6_1-assessment.md`) - 579 lines
+  - 50 points total (passing: 70%)
+  - Sections: Multiple Choice (20 points), Short Answer (10 points), Code Analysis (10 points), Implementation Challenge (10 points)
+  - Complete answer key with explanations
+  - Scoring guide with mastery levels
+  - Practical implementation challenges
+  - Preparation checklist for Phase 6.2
+
+✅ **Phase 6.2 Learning Guide** (`docs/guide/phase6_2-learning-guide.md`) - 1,108 lines covering:
   - ORDER BY clause: Single and multi-column sorting with ASC/DESC directions
   - LIMIT clause: Row restriction for performance and pagination
   - OFFSET clause: Row skipping for pagination
@@ -834,7 +857,7 @@ cargo tarpaulin --out Html
   - Known limitations: Current constraints and future enhancements
   - 10 main sections covering all aspects of Phase 6.2
 
-✅ **Phase 6.2 Assessment** (`phase6_2-assessment.md`) - 533 lines
+✅ **Phase 6.2 Assessment** (`docs/assessment/phase6_2-assessment.md`) - 533 lines
   - 9-part comprehensive assessment covering all Phase 6.2 concepts
   - Multiple choice and true/false questions (30 points)
   - Short answer questions (30 points)
@@ -849,7 +872,7 @@ cargo tarpaulin --out Html
 
 #### Phase 7: Interactive REPL
 
-✅ **Phase 7 Learning Guide** (`docs/phase7-learning-guide.md`) - 462 lines covering:
+✅ **Phase 7 Learning Guide** (`docs/guide/phase7-learning-guide.md`) - 462 lines covering:
   - REPL Overview and Learning Objectives
   - Rust Concepts: rustyline crate, error handling, command pattern
   - Database Concepts: end-to-end query processing, catalog management
@@ -861,7 +884,7 @@ cargo tarpaulin --out Html
   - Further Improvements: short-term, medium-term, long-term features
   - Completion Checklist
 
-✅ **Phase 7 Assessment** (`docs/phase7-assessment.md`) - 620 lines
+✅ **Phase 7 Assessment** (`docs/assessment/phase7-assessment.md`) - 620 lines
   - Comprehensive assessment across 5 parts
   - Part 1: Knowledge Questions (25 points, 15 questions)
   - Part 2: Practical Tasks (35 points, 5 tasks)
@@ -874,7 +897,7 @@ cargo tarpaulin --out Html
 
 #### Phase 8: Additional Tasks & Quality Improvements
 
-✅ **Phase 8 Learning Guide** (`docs/phase8-learning-guide.md`) - 2,371 lines covering 12 sections:
+✅ **Phase 8 Learning Guide** (`docs/guide/phase8-learning-guide.md`) - 2,371 lines covering 12 sections:
   - Overview and Learning Objectives for Phase 8
   - API Documentation (cargo doc, rustdoc, documentation comments, doc tests)
   - Test Strategy (unit tests, integration tests, test pyramid, AAA pattern)
@@ -888,7 +911,7 @@ cargo tarpaulin --out Html
   - Resources & Further Reading (links to external documentation)
   - Summary and key takeaways
 
-✅ **Phase 8 Assessment** (`docs/phase8-assessment.md`) - 447 lines
+✅ **Phase 8 Assessment** (`docs/assessment/phase8-assessment.md`) - 447 lines
   - 45 questions across 5 sections
   - Section 1: API Documentation (10 questions)
   - Section 2: Test Strategy (10 questions)

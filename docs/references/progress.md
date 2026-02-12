@@ -1174,8 +1174,191 @@ Potential enhancements for future development:
 
 ## 📚 Documentation Summary
 
+### Phase 1 Learning Guide
+- **File**: `docs/phase1-learning-guide.md` (2,667 lines)
+- **Chapters**: 10 comprehensive chapters
+- **Content**:
+  - Rust programming fundamentals and best practices
+  - Database internals and column-oriented storage
+  - Code examples with detailed explanations
+  - Self-assessment questions and exercises
+- **Learning Outcomes**: Building foundational understanding of Rust and database concepts
+
+### Phase 1 Assessment
+- **File**: `docs/assessment/phase1-assessment.md` (431 lines)
+- **Questions**: 35 multiple-choice questions covering Phase 1 concepts
+- **Features**:
+  - Comprehensive answer key with detailed explanations
+  - Scoring guide and study recommendations
+  - Preparation for Phase 2
+
+### Phase 2 Learning Guide
+- **File**: `docs/guide/phase2-learning-guide.md` (1,546 lines)
+- **Chapters**: 10 comprehensive chapters
+- **Content**:
+  - Table design fundamentals and data organization
+  - HashMap and collections in Rust for efficient lookups
+  - Advanced trait implementations and type safety
+  - Schema validation and enforcement mechanisms
+  - Catalog design patterns for metadata management
+  - Error handling for complex data structures
+  - Testing strategies for storage layer components
+  - Integration and modularity best practices
+- **Learning Outcomes**: Building the storage layer with Tables and Catalog
+
+### Phase 2 Assessment
+- **File**: `docs/assessment/phase2-assessment.md` (484 lines)
+- **Questions**: 35 multiple-choice questions across 4 parts
+- **Parts**: Rust fundamentals, Table operations, Catalog management, Advanced topics
+- **Features**:
+  - Comprehensive answer key with detailed explanations
+  - Scoring guide with readiness indicators for Phase 3
+
+### Phase 3 Learning Guide
+- **File**: `docs/guide/phase3-learning-guide.md` (2,009 lines)
+- **Chapters**: 11 comprehensive chapters
+- **Content**:
+  - CSV parsing fundamentals and type inference algorithms
+  - Row-to-column transposition and data transformation
+  - Error handling strategies and testing approaches
+  - Advanced topics like streaming and parallel processing
+  - Self-assessment questions and practical exercises
+- **Learning Outcomes**: Implementing CSV data ingestion
+
+### Phase 3 Assessment
+- **File**: `docs/assessment/phase3-assessment.md` (1,919 lines)
+- **Questions**: 45 multiple-choice questions covering CSV ingestion concepts
+- **Features**:
+  - Comprehensive answer key with detailed explanations
+  - Scoring guide and preparation checklist for Phase 4
+  - Tests understanding of Rust patterns and database concepts
+
+### Phase 4 Learning Guide
+- **File**: `docs/guide/phase4-learning-guide.md` (2,895 lines)
+- **Chapters**: 12 comprehensive chapters
+- **Content**:
+  - Query execution foundation and vectorized processing
+  - TableScan operator with column pruning
+  - Filter operator with predicate system (BinaryComparison, AND, OR)
+  - Project operator with column selection and aliasing
+  - Aggregate functions (Count, Sum, Min, Max, Avg) with stateful design
+  - GroupBy operator with hash-based grouping and GroupKey
+  - Operator integration testing patterns
+  - Advanced topics (predicate/projection pushdown, vectorization, streaming)
+  - Best practices and design patterns
+  - Learning outcomes and self-assessment questions
+  - Practical exercises (Limit, Distinct, Variance, Streaming GroupBy)
+  - Appendices (code summary, benchmarks, common errors, glossary)
+- **Learning Outcomes**: Building the query execution engine
+
+### Phase 4 Assessment
+- **File**: `docs/assessment/phase4-assessment.md` (1,220 lines)
+- **Questions**: 75 multiple-choice questions across 8 parts
+- **Parts**: Query Execution Foundation, TableScan, Filter, Project, Aggregate Functions, GroupBy, Integration Testing, Advanced Topics
+- **Features**:
+  - Complete answer key with explanations
+  - Scoring guide (70% passing threshold)
+  - Performance breakdown by topic
+  - Self-reflection questions
+  - Preparation checklist for Phase 5
+  - Study tips for before/during/after assessment
+
+### Phase 5 Learning Guide
+- **File**: `docs/guide/phase5-learning-guide.md` (2,170 lines)
+- **Chapters**: 12 comprehensive chapters
+- **Content**:
+  - Introduction to SQL parsing and its role in database systems
+  - Tokenizer/Lexer design with 20+ token types
+  - Abstract Syntax Tree (AST) design principles
+  - Recursive descent parsing methodology
+  - Expression parsing with operator precedence handling
+  - SQL clause parsing (SELECT, FROM, WHERE, GROUP BY)
+  - Aggregate function parsing (COUNT, SUM, AVG, MIN, MAX)
+  - Error handling strategies with descriptive messages
+  - Testing strategies for parsers
+  - Best practices and design patterns
+  - Learning outcomes and self-assessment questions
+  - 15 practical exercises (beginner, intermediate, advanced)
+- **Learning Outcomes**: Building a SQL parser
+
+### Phase 5 Assessment
+- **File**: `docs/assessment/phase5-assessment.md` (785 lines)
+- **Questions**: 67 multiple-choice questions across 9 parts
+- **Parts**: Tokenizer/Lexer Fundamentals, AST Design, Recursive Descent Parsing, Expression Parsing, SQL Clauses, Aggregate Functions, Error Handling, Testing Strategies, Advanced Topics
+- **Features**:
+  - Complete answer key with detailed explanations
+  - Scoring guide with readiness indicators for Phase 6
+  - Self-reflection questions
+  - Preparation checklist for Phase 6 (Query Planning)
+
+### Phase 6.1 Learning Guide
+- **File**: `docs/guide/phase6_1-learning-guide.md` (1,155 lines)
+- **Chapters**: 12 comprehensive sections
+- **Content**:
+  - Query Planning Fundamentals
+  - Architecture Overview
+  - Key Components
+  - Implementation Details
+  - Predicate Evaluation
+  - Aggregate Functions
+  - Operator Ordering
+  - Column Pruning
+  - Type Conversion
+  - Testing Strategy
+  - Common Pitfalls
+  - Best Practices
+- **Learning Outcomes**: Building a query planner
+
+### Phase 6.1 Assessment
+- **File**: `docs/assessment/phase6_1-assessment.md` (579 lines)
+- **Questions**: 50 points total (passing: 70%)
+- **Sections**: Multiple Choice (20 points), Short Answer (10 points), Code Analysis (10 points), Implementation Challenge (10 points)
+- **Features**:
+  - Complete answer key with explanations
+  - Scoring guide with mastery levels
+  - Practical implementation challenges
+  - Preparation checklist for Phase 6.2
+
+### Phase 6.2 Learning Guide
+- **File**: `docs/guide/phase6_2-learning-guide.md` (1,108 lines)
+- **Chapters**: 10 comprehensive sections
+- **Content**:
+  - ORDER BY clause: Single and multi-column sorting with ASC/DESC directions
+  - LIMIT clause: Row restriction for performance and pagination
+  - OFFSET clause: Row skipping for pagination
+  - Combined usage: ORDER BY + LIMIT + OFFSET patterns
+  - Parser implementation: New token types, AST changes, parsing logic
+  - Execution engine: Sort and Limit operators with implementation details
+  - Query planning: Operator ordering, column index mapping
+  - Code examples: 7 detailed examples with execution plans
+  - Best practices: Performance considerations and common patterns
+  - Known limitations: Current constraints and future enhancements
+- **Learning Outcomes**: Understanding ORDER BY, LIMIT, OFFSET implementation
+- **Examples**: 7 comprehensive examples with execution plans
+
+### Phase 6.2 Assessment
+- **File**: `docs/assessment/phase6_2-assessment.md` (533 lines)
+- **Questions**: 170 total points (passing: 70%)
+- **Parts**:
+  * Part 1: Multiple Choice (20 points, 10 questions)
+  * Part 2: True/False (10 points, 10 questions)
+  * Part 3: Short Answer (30 points, 6 questions)
+  * Part 4: Code Analysis (20 points, 2 questions)
+  * Part 5: Implementation Challenge (15 points) - NULLS FIRST/LAST
+  * Part 6: Debugging Challenge (15 points) - Top N per group
+  * Part 7: Critical Thinking (20 points) - Social media feed design
+  * Part 8: Code Writing Challenge (20 points) - Top N per group function
+  * Part 9: Advanced Topics (20 points) - Window functions/Keyset pagination/Push-down optimization
+  * Bonus Questions: 2 optional questions (10 points each)
+- **Features**:
+  - Complete answer key with explanations
+  - Scoring guide with mastery levels
+  - Practical implementation challenges
+  - Critical thinking scenarios
+  - Preparation checklist for Phase 7
+
 ### Phase 7 Learning Guide
-- **File**: `docs/phase7-learning-guide.md` (462 lines)
+- **File**: `docs/guide/phase7-learning-guide.md` (462 lines)
 - **Chapters**: 10 comprehensive sections
 - **Content**:
   - REPL Overview and Learning Objectives
@@ -1192,7 +1375,7 @@ Potential enhancements for future development:
 - **Examples**: Comprehensive REPL implementation
 
 ### Phase 7 Assessment
-- **File**: `docs/phase7-assessment.md` (620 lines)
+- **File**: `docs/assessment/phase7-assessment.md` (620 lines)
 - **Questions**: Comprehensive assessment across 5 parts
 - **Parts**:
   * Part 1: Knowledge Questions (25 points, 15 questions)
@@ -1224,7 +1407,7 @@ Potential enhancements for future development:
   - Time estimates for each section
 
 ### Phase 8 Learning Guide
-- **File**: `docs/phase8-learning-guide.md` (2,371 lines)
+- **File**: `docs/guide/phase8-learning-guide.md` (2,371 lines)
 - **Chapters**: 12 comprehensive sections
 - **Content**:
   - Overview and Learning Objectives for Phase 8
@@ -1243,7 +1426,7 @@ Potential enhancements for future development:
 - **Examples**: 4 comprehensive practical examples covering documentation, testing, benchmarking, and property-based testing
 
 ### Phase 8 Assessment
-- **File**: `docs/phase8-assessment.md` (447 lines)
+- **File**: `docs/assessment/phase8-assessment.md` (447 lines)
 - **Questions**: 45 questions across 5 sections
 - **Sections**:
   * Section 1: API Documentation (10 questions)
@@ -1273,117 +1456,6 @@ Potential enhancements for future development:
   - Recommended next steps based on score
   - Difficulty assessment (Intermediate)
 
-### Phase 6.2 Learning Guide
-- **File**: `phase6_2-learning-guide.md` (1,108 lines)
-- **Chapters**: 10 comprehensive sections
-- **Content**:
-  - ORDER BY clause: Single and multi-column sorting with ASC/DESC directions
-  - LIMIT clause: Row restriction for performance and pagination
-  - OFFSET clause: Row skipping for pagination
-  - Combined usage: ORDER BY + LIMIT + OFFSET patterns
-  - Parser implementation: New token types, AST changes, parsing logic
-  - Execution engine: Sort and Limit operators with implementation details
-  - Query planning: Operator ordering, column index mapping
-  - Code examples: 7 detailed examples with execution plans
-  - Best practices: Performance considerations and common patterns
-  - Known limitations: Current constraints and future enhancements
-- **Learning Outcomes**: Understanding ORDER BY, LIMIT, OFFSET implementation
-- **Examples**: 7 comprehensive examples with execution plans
-
-### Phase 6.2 Assessment
-- **File**: `phase6_2-assessment.md` (533 lines)
-- **Questions**: 170 total points (passing: 70%)
-- **Parts**:
-  * Part 1: Multiple Choice (20 points, 10 questions)
-  * Part 2: True/False (10 points, 10 questions)
-  * Part 3: Short Answer (30 points, 6 questions)
-  * Part 4: Code Analysis (20 points, 2 questions)
-  * Part 5: Implementation Challenge (15 points) - NULLS FIRST/LAST
-  * Part 6: Debugging Challenge (15 points) - Top N per group
-  * Part 7: Critical Thinking (20 points) - Social media feed design
-  * Part 8: Code Writing Challenge (20 points) - Top N per group function
-  * Part 9: Advanced Topics (20 points) - Window functions/Keyset pagination/Push-down optimization
-  * Bonus Questions: 2 optional questions (10 points each)
-- **Features**:
-  - Complete answer key with explanations
-  - Scoring guide with mastery levels
-  - Practical implementation challenges
-  - Critical thinking scenarios
-  - Preparation checklist for Phase 7
-
-### Phase 5 Learning Guide
-- **File**: `docs/phase5-learning-guide.md` (2,170 lines)
-- **Chapters**: 12 comprehensive chapters
-- **Content**:
-  - Introduction to SQL parsing and its role in database systems
-  - Tokenizer/Lexer design with 20+ token types
-  - Abstract Syntax Tree (AST) design principles
-  - Recursive descent parsing methodology
-  - Expression parsing with operator precedence handling
-  - SQL clause parsing (SELECT, FROM, WHERE, GROUP BY)
-  - Aggregate function parsing (COUNT, SUM, AVG, MIN, MAX)
-  - Error handling strategies with descriptive messages
-  - Testing strategies for parsers
-  - Best practices and design patterns
-  - Learning outcomes and self-assessment questions
-  - 15 practical exercises (beginner, intermediate, advanced)
-
-### Phase 5 Assessment
-- **File**: `docs/phase5-assessment.md` (785 lines)
-- **Questions**: 67 multiple-choice questions across 9 parts
-- **Parts**:
-  * Part 1: Tokenizer/Lexer Fundamentals (10 questions)
-  * Part 2: AST Design and Representation (10 questions)
-  * Part 3: Recursive Descent Parsing (10 questions)
-  * Part 4: Expression Parsing & Operator Precedence (10 questions)
-  * Part 5: SQL Clause Parsing (8 questions)
-  * Part 6: Aggregate Functions (5 questions)
-  * Part 7: Error Handling in Parsers (5 questions)
-  * Part 8: Testing Strategies (5 questions)
-  * Part 9: Advanced Topics (4 questions)
-- **Features**:
-  - Complete answer key with explanations
-  - Scoring guide with readiness indicators for Phase 6
-  - Self-reflection questions
-  - Preparation checklist for Phase 6 (Query Planning)
-
-### Phase 4 Learning Guide
-- **File**: `docs/phase4-learning-guide.md` (2,895 lines)
-- **Chapters**: 12 comprehensive chapters
-- **Content**:
-  - Query execution foundation and vectorized processing
-  - TableScan operator with column pruning
-  - Filter operator with predicate system (BinaryComparison, AND, OR)
-  - Project operator with column selection and aliasing
-  - Aggregate functions (Count, Sum, Min, Max, Avg) with stateful design
-  - GroupBy operator with hash-based grouping and GroupKey
-  - Operator integration testing patterns
-  - Advanced topics (predicate/projection pushdown, vectorization, streaming)
-  - Best practices and design patterns
-  - Learning outcomes and self-assessment questions
-  - Practical exercises (Limit, Distinct, Variance, Streaming GroupBy)
-  - Appendices (code summary, benchmarks, common errors, glossary)
-
-### Phase 4 Assessment
-- **File**: `docs/phase4-assessment.md` (1,220 lines)
-- **Questions**: 75 multiple-choice questions across 8 parts
-- **Parts**:
-  * Part 1: Query Execution Foundation (10 questions)
-  * Part 2: TableScan Operator (10 questions)
-  * Part 3: Filter Operator & Predicates (10 questions)
-  * Part 4: Project Operator (10 questions)
-  * Part 5: Aggregate Functions (10 questions)
-  * Part 6: GroupBy Operator (10 questions)
-  * Part 7: Operator Integration Testing (10 questions)
-  * Part 8: Advanced Topics (5 questions)
-- **Features**:
-  - Complete answer key with explanations
-  - Scoring guide (70% passing threshold)
-  - Performance breakdown by topic
-  - Self-reflection questions
-  - Preparation checklist for Phase 5
-  - Study tips for before/during/after assessment
-
 ### CI/CD Pipeline
 - **Location**: `.githooks/` directory
   - `pre-commit` - Runs before commits (formatting, linting, tests)
@@ -1405,29 +1477,12 @@ Potential enhancements for future development:
   - Automated validation pipeline
   - No external dependencies required
 
-### Phase 1 Learning Guide
-- **File**: `docs/phase1-learning-guide.md` (2,667 lines)
-- **Size**: 2668 lines
-- **Chapters**: 10 comprehensive chapters
-- **Content**:
-  - Rust programming fundamentals
-  - Database internals theory
-  - Code examples and best practices
-  - Self-assessment questions
-  - Practical exercises
-
-### Other Documentation
-- **CI Hooks Documentation**:
-  - `.githooks/pre-commit` (171 lines)
-  - `.githooks/pre-push` (373 lines)
-  - `scripts/setup-ci-hooks.sh` (454 lines)
-  - Total: 998 lines of CI automation
-
-### Other Documentation
-- **README.md**: Updated with Phase 6.2 features and status
-- **progress.md**: This file - development tracking and metrics
-- **inline docs**: Comprehensive module and function documentation (51 doc tests passing)
-- **Phase 6.2 Files**: 
-  - `phase6_2-learning-guide.md`: 1,108 lines
-  - `phase6_2-assessment.md`: 533 lines
-  - Total: 1,641 lines of educational content
+### Code Review Workflow & Assessment
+- **File**: `docs/guide/code-review-workflow.md` (2,590 lines)
+  - Complete guide to Pull Requests and code reviews
+  - Git workflow best practices
+  - Communication guidelines for code reviews
+- **File**: `docs/assessment/code-review-assessment.md` (234 lines)
+  - Comprehensive assessment covering code review concepts and practices
+  - Multiple choice questions on code review methodology
+  - Practical scenarios and best practices evaluation
