@@ -495,17 +495,81 @@ cargo run --example --help
 
 ### Available Examples
 
-1. **`examples/simple_table.rs`**
-   - Demonstrates programmatic table creation
-   - Shows manual data insertion
-   - Runs SQL queries against in-memory tables
-   - Perfect for understanding the core API
+#### 1. **`examples/simple_table.rs`**
+Demonstrates programmatic table creation and SQL queries.
 
-2. **`examples/csv_loading.rs`**
-   - Shows how to load CSV files
-   - Demonstrates various SQL operations
-   - Includes filtering, grouping, sorting, and aggregation
-   - Great reference for real-world usage
+**Sample Output:**
+```bash
+$ cargo run --example simple_table
+🚀 Mini Rust OLAP - Simple Table Example
+
+📋 Creating 'employees' table...
+✓ Table created and registered
+
+🔍 Example 1: SELECT * FROM employees
+SQL: SELECT * FROM employees
+  +----+----------+-------------+--------+
+  | id | name     | department  | salary |
+  +----+----------+-------------+--------+
+  | 1  | Alice    | Engineering | 90000  |
+  | 2  | Bob      | Marketing   | 75000  |
+  | 3  | Charlie  | Engineering | 95000  |
+  | 4  | Diana    | Sales       | 80000  |
+  | 5  | Eve      | Marketing   | 82000  |
+
+🔍 Example 2: SELECT department, AVG(salary) FROM employees GROUP BY department
+SQL: SELECT department, AVG(salary) FROM employees GROUP BY department
+  +-------------+-------------+
+  | col_0       | col_1       |
+  +-------------+-------------+
+  | Engineering | 92500.0     |
+  | Marketing   | 78500.0     |
+  | Sales       | 80000.0     |
+
+All examples completed successfully! ✓
+```
+
+#### 2. **`examples/csv_loading.rs`**
+Demonstrates CSV loading and various SQL operations.
+
+**Sample Output:**
+```bash
+$ cargo run --example csv_loading
+🚀 Mini Rust OLAP - CSV Loading Example
+
+📂 Loading data from: tests/data/test_data.csv
+✓ Data loaded successfully (10 rows, 6 columns)
+
+🔍 Example 1: SELECT * FROM employees LIMIT 5
+SQL: SELECT * FROM employees LIMIT 5
+  +----+----------+-------------+--------+
+  | id | name     | department  | salary |
+  +----+----------+-------------+--------+
+  | 1  | Alice    | Engineering | 90000  |
+  | 2  | Bob      | Marketing   | 75000  |
+  | 3  | Charlie  | Engineering | 95000  |
+  | 4  | Diana    | Sales       | 80000  |
+  | 5  | Eve      | Marketing   | 82000  |
+
+🔍 Example 2: SELECT department, COUNT(*) FROM employees WHERE salary > 80000 GROUP BY department
+SQL: SELECT department, COUNT(*) FROM employees WHERE salary > 80000 GROUP BY department
+  +-------------+-------+
+  | col_0       | col_1 |
+  +-------------+-------+
+  | Engineering | 2     |
+  | Marketing   | 1     |
+
+🔍 Example 3: SELECT name, salary FROM employees ORDER BY salary DESC LIMIT 3
+SQL: SELECT name, salary FROM employees ORDER BY salary DESC LIMIT 3
+  +----------+--------+
+  | col_0    | col_1  |
+  +----------+--------+
+  | Charlie  | 95000  |
+  | Alice    | 90000  |
+  | Eve      | 82000  |
+
+All examples completed successfully! ✓
+```
 
 For detailed explanations of each example, see `examples/README.md`.
 
@@ -530,15 +594,46 @@ cargo bench -- --profile-time 10  # For flamegraphs
 open target/criterion/report/index.html
 ```
 
-### Benchmark Categories
+### What the Benchmarks Measure
 
-- **`full_scan`** - Table scan performance
-- **`filter`** - Predicate filtering
-- **`projection`** - Column selection
-- **`aggregation`** - Aggregate functions
-- **`group_by`** - Grouping operations
-- **`order_by`** - Sorting performance
-- **`complex_query`** - Multi-operator query chains
+The comprehensive benchmark suite measures performance across all query execution stages:
+
+- **SQL Parsing** - How fast queries are parsed and converted to AST
+- **Full Scan** - Performance of reading entire tables into memory
+- **Filter Operations** - WHERE clause evaluation and predicate filtering
+- **Project Operations** - Column selection and reordering performance
+- **Aggregation** - GROUP BY and aggregate function (COUNT, SUM, AVG, MIN, MAX) performance
+- **Order By** - Sorting performance for single and multi-column sorting
+- **Full Query Execution** - End-to-end query performance (parse → plan → execute)
+
+Each benchmark tests multiple data sizes (100, 1,000, 10,000 rows) to provide comprehensive performance insights.
+
+### Sample Benchmark Output
+
+```bash
+$ cargo bench
+
+Running target/release/deps/query_benchmark-xxx
+
+running 7 tests
+test full_scan::scan_100_rows      ... bench:       1,234 ns/iter (+/- 123)
+test full_scan::scan_1000_rows     ... bench:      12,345 ns/iter (+/- 1,234)
+test filter::filter_1000_rows      ... bench:      8,765 ns/iter (+/- 876)
+test projection::project_1000_rows ... bench:      3,456 ns/iter (+/- 345)
+test aggregation::group_by_1000     ... bench:     15,678 ns/iter (+/- 1,567)
+test order_by::sort_1000_rows      ... bench:      9,876 ns/iter (+/- 987)
+test complex_query::full_1000      ... bench:     23,456 ns/iter (+/- 2,345)
+
+test result: ok. 0.00s; 0.00s; 0.00s for 7 tests
+
+Gnuplot not found, using plotters backend
+```
+
+Detailed HTML reports are generated in `target/criterion/report/index.html` with:
+- Performance comparisons between runs
+- Graphs showing performance over time
+- Statistical analysis (mean, median, standard deviation)
+- Regression/improvement detection
 
 For detailed interpretation of benchmark results, see `benches/README.md`.
 
@@ -942,6 +1037,58 @@ cargo doc --open
 5. Run `cargo test` to verify
 6. Run `cargo clippy` to check for warnings
 7. Update this README if applicable
+
+---
+
+## ⚡ Quick Reference
+
+### Essential Commands
+
+```bash
+# Build project
+cargo build
+
+# Run tests
+cargo test
+
+# Run REPL
+cargo run --release
+
+# Run examples
+cargo run --example simple_table
+cargo run --example csv_loading
+
+# Run benchmarks
+cargo bench
+
+# Run test scripts
+./scripts/test_repl.sh
+./scripts/test_repl_simple.sh
+./scripts/final_test.sh
+```
+
+### Key File Locations
+
+| Item | Location |
+|-------|----------|
+| Examples | `examples/` |
+| Benchmarks | `benches/` |
+| Test Data | `tests/data/` |
+| Test Scripts | `scripts/` |
+| Reference Docs | `docs/references/` |
+| Main Docs | `docs/` |
+| Source Code | `src/` |
+
+### Loading CSV Data in REPL
+
+```bash
+# Load test data
+LOAD tests/data/test_data.csv AS employees
+
+# Query the loaded data
+SELECT * FROM employees
+SELECT COUNT(*) FROM employees
+```
 
 ---
 

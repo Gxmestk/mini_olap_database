@@ -633,6 +633,102 @@ cargo bench -- --profile-time 10  # For flamegraphs
 - **`examples/README.md`** - Example guide with code explanations
 - **`benches/README.md`** - Benchmark guide with interpretation tips
 
+### Migration Guide for Developers
+
+If your code referenced old file locations, update your references:
+
+**CSV Files:**
+```bash
+# Old path for test data
+test_data.csv
+
+# New path
+tests/data/test_data.csv
+
+# When loading in REPL
+LOAD tests/data/test_data.csv AS employees
+```
+
+**Documentation Paths:**
+```bash
+# Old paths
+prd.md
+progress.md
+
+# New paths
+docs/references/prd.md
+docs/references/progress.md
+```
+
+**Test Scripts:**
+```bash
+# Old location (if referenced from root)
+./test_repl.sh
+
+# New location
+./scripts/test_repl.sh
+```
+
+### Adding New Content
+
+**To add a new example:**
+```bash
+# Create file in examples/
+touch examples/my_feature.rs
+
+# Run it
+cargo run --example my_feature
+
+# Add to examples/README.md
+```
+
+**To add a new benchmark:**
+```bash
+# Create file in benches/
+touch benches/my_feature.rs
+
+# Run it
+cargo bench my_feature
+
+# Add to benches/README.md
+```
+
+**To add test data:**
+```bash
+# Place file in tests/data/
+cp my_test_data.csv tests/data/
+```
+
+**To add a script:**
+```bash
+# Place file in scripts/
+chmod +x scripts/my_script.sh
+```
+
+### Remaining Work (Optional)
+
+The following items could be addressed in future updates:
+
+1. **Documentation Updates**
+   - Update `docs/phase7-learning-guide.md` with new paths
+   - Update `docs/phase7-assessment.md` with new paths
+   - Update `docs/phase7-summary.md` with new paths
+
+2. **Additional Examples**
+   - Example demonstrating error handling
+   - Example showing advanced query features
+   - Example showing custom aggregation
+
+3. **Additional Benchmarks**
+   - Microbenchmarks for specific operations
+   - Memory usage benchmarks
+   - Concurrency benchmarks
+
+4. **Test Enhancements**
+   - Add integration test for new CSV path
+   - Add tests for examples
+   - Add tests for benchmarks
+
 ---
 
 ## 📋 Additional Tasks
