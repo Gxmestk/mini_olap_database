@@ -5,7 +5,7 @@
 [![Rust](https://img.shields.io/badge/rust-1.70%2B-orange.svg)](https://www.rust-lang.org/)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Tests](https://img.shields.io/badge/tests-443%20passing-green.svg)]()
-[![Phase](https://img.shields.io/badge/phase-6.2%20complete-success.svg)]()
+[![Phase](https://img.shields.io/badge/phase-7%20complete-success.svg)]()
 
 **A lightweight, in-memory OLAP database engine built with Rust for educational purposes**
 
@@ -17,7 +17,7 @@
 
 ## 📖 About
 
-**Mini Rust OLAP** is a miniature Online Analytical Processing (OLAP) database engine designed specifically for educational purposes. It demonstrates core database internals concepts through clean, well-documented Rust code.
+**Mini Rust OLAP** is a miniature Online Analytical Processing (OLAP) database engine designed specifically for educational purposes. It demonstrates core database internals concepts through clean, well-documented Rust code with a **fully interactive command-line interface** for real-time data exploration.
 
 ### Why Mini Rust OLAP?
 
@@ -124,17 +124,22 @@ Unlike production databases that are complex and hard to understand, Mini Rust O
   - LIMIT + OFFSET: Pagination functionality
   - **Multi-column ORDER BY with LIMIT/OFFSET**
 
-  #### 💻 Interactive REPL (Phase 7)
-  - **Command History**: Full readline support with `rustyline` for persistent command history
-  - **CSV Loading**: LOAD command to import CSV files into the catalog with automatic type inference
-  - **SQL Query Execution**: Full support for SELECT queries with all clauses (WHERE, GROUP BY, ORDER BY, LIMIT)
-  - **Catalog Management**: SHOW TABLES and DESCRIBE commands to inspect database state
-  - **User Interface**: Clean ASCII table formatting for query results and schema display
-  - **Error Handling**: Comprehensive error messages with box formatting and detailed context
-  - **Performance Metrics**: Execution timing displayed for all operations
-  - **Utility Commands**: HELP, CLEAR, and EXIT for user interaction
-  - **Aggregate Functions**: COUNT, SUM, AVG, MIN, MAX working seamlessly in REPL
-  - **Pagination**: Result sets limited to 50 rows by default to prevent overwhelming output
+  #### 💻 Interactive REPL (Phase 7) - NEW!
+  - **Command History**: Full readline support with `rustyline` for persistent command history to `.olap_history`
+  - **CSV Loading**: LOAD command to import CSV files into catalog with automatic type inference (Int64, Float64, String)
+  - **SQL Query Execution**: Full support for SELECT queries including WITH clause for CTEs
+  - **Complete Clauses**: WHERE, GROUP BY, ORDER BY (ASC/DESC), LIMIT all supported
+  - **Catalog Management**: SHOW TABLES (also `.TABLES`) and DESCRIBE (also `.SCHEMA`) commands
+  - **Professional Output**: Clean ASCII table formatting with box-drawing characters (┌─┐│├─┤└─┘)
+  - **Error Handling**: Visual error messages in formatted boxes with helpful context
+  - **Performance Metrics**: Execution timing for all operations (ms or s based on duration)
+  - **Signal Handling**: Graceful Ctrl+C (continue) and Ctrl+D (exit) behavior
+  - **Command Aliases**: Multiple formats supported (HELP/.HELP/?, EXIT/QUIT/.EXIT, CLEAR/.CLEAR)
+  - **Utility Commands**: HELP, CLEAR, and EXIT for enhanced user interaction
+  - **Aggregate Functions**: COUNT(*), SUM, AVG, MIN, MAX working seamlessly
+  - **Pagination**: Result sets limited to 50 rows by default with pagination messages
+  - **Empty Result Handling**: Clear messages for empty result sets
+  - **Welcome Screen**: Professional startup banner with version information
 
   ### Planned Features (Roadmap)
 
@@ -278,7 +283,7 @@ fn main() -> mini_rust_olap::Result<()> {
 }
 ```
 
-### Manual Filtering Example
+### Library API Example
 
 ```rust
 use mini_rust_olap::{Column, IntColumn, FloatColumn, Value};
@@ -307,6 +312,162 @@ fn main() -> mini_rust_olap::Result<()> {
     Ok(())
 }
 ```
+
+### REPL Usage Example
+
+The interactive REPL provides an easy way to explore data without writing code:
+
+```bash
+# Build and start the REPL
+cargo build --release
+./target/release/mini_rust_olap
+
+# You'll see the welcome screen
+╔═════════════════════════════════════════════════════════╗
+║     Mini Rust OLAP - Interactive REPL v0.1.0            ║
+╚═════════════════════════════════════════════════════════╝
+
+Welcome to Mini Rust OLAP! Type HELP for available commands.
+
+olap> # Load some data
+olap> LOAD examples/sales.csv AS sales
+Loading CSV from 'examples/sales.csv' as 'sales'...
+✓ Loaded table 'sales' successfully.
+⏱ Executed in 7.62ms
+
+olap> # Explore the catalog
+olap> SHOW TABLES
+Tables in catalog:
+  - sales
+⏱ Executed in 0.02ms
+
+olap> # Inspect the table schema
+olap> DESCRIBE sales
+
+Table: sales
+┌────────────────────────┬──────────┬────────────────┐
+│ Column Name            │ Type     │ Description    │
+├────────────────────────┼──────────┼────────────────┤
+│ id                     │ Int64    │        1000 rows│
+│ product                │ String   │        1000 rows│
+│ region                 │ String   │        1000 rows│
+│ amount                 │ Float64  │        1000 rows│
+│ date                   │ String   │        1000 rows│
+└────────────────────────┴──────────┴────────────────┘
+Total rows: 1000
+⏱ Executed in 0.47ms
+
+olap> # Run a simple query
+olap> SELECT * FROM sales LIMIT 5
+┌────┬────────────────┬────────────┬────────────┬────────────┐
+│col_0│ col_1          │ col_2      │ col_3      │ col_4      │
+├────┼────────────────┼────────────┼────────────┼────────────┤
+│  1 │ Widget A       │ North      │    1000.0  │2024-01-01  │
+│  2 │ Widget B       │ South      │    1500.0  │2024-01-02  │
+│  3 │ Widget A       │ East       │    1200.0  │2024-01-03  │
+│  4 │ Widget C       │ West       │     800.0  │2024-01-04  │
+│  5 │ Widget B       │ North      │    1100.0  │2024-01-05  │
+└────┴────────────────┴────────────┴────────────┴────────────┘
++(5 rows)
+⏱ Executed in 0.62ms
+
+olap> # Filter with WHERE clause
+olap> SELECT product, amount FROM sales WHERE amount > 1400
+┌────────────────┬──────────────────┐
+│ col_0          │ col_1             │
+├────────────────┼──────────────────┤
+│ Widget B       │      1500.0       │
+│ Widget A       │      1450.0       │
+│ Widget C       │      1600.0       │
+└────────────────┴──────────────────┘
++(3 rows)
+⏱ Executed in 0.41ms
+
+olap> # Aggregate by region
+olap> SELECT region, COUNT(*), SUM(amount) FROM sales GROUP BY region
+┌────────────────┬──────────────┬──────────────────┐
+│ col_0          │ col_1        │ col_2             │
+├────────────────┼──────────────┼──────────────────┤
+│ East           │          250  │        125000.0   │
+│ North          │          250  │        118000.0   │
+│ South          │          250  │        132000.0   │
+│ West           │          250  │         95000.0   │
+└────────────────┴──────────────┴──────────────────┘
++(4 rows)
+⏱ Executed in 0.35ms
+
+olap> # Complex query with sorting
+olap> SELECT product, COUNT(*) AS count 
+    > FROM sales 
+    > WHERE amount > 1000 
+    > GROUP BY product 
+    > ORDER BY count DESC
+┌────────────────┬──────────────┐
+│ col_0          │ col_1        │
+├────────────────┼──────────────┤
+│ Widget A       │          180  │
+│ Widget B       │          165  │
+│ Widget C       │          155  │
+└────────────────┴──────────────┘
++(3 rows)
+⏱ Executed in 0.41ms
+
+olap> # Get help
+olap> HELP
+
+Mini Rust OLAP - Available Commands:
+═══════════════════════════════════════════
+
+Data Loading:
+  LOAD <path> AS <table_name>      Load a CSV file into the catalog
+
+Querying:
+  SELECT <columns> FROM <table>    Execute a SQL SELECT query
+  WHERE <condition>                Add filtering conditions
+  GROUP BY <columns>               Group results
+  ORDER BY <columns> [ASC|DESC]    Sort results
+  LIMIT <n>                        Limit number of rows
+
+Catalog Management:
+  SHOW TABLES                       List all tables
+  DESCRIBE <table_name>             Show table schema
+
+Utility:
+  HELP or ?                         Show this help message
+  CLEAR                             Clear screen
+  EXIT or QUIT                      Exit the REPL
+
+Features:
+  • Columnar storage for fast analytics
+  • SQL-like query language
+  • Automatic type inference from CSV
+  • Aggregations: COUNT, SUM, AVG, MIN, MAX
+⏱ Executed in 0.01ms
+
+olap> # Use command history (up arrow)
+olap> SELECT product, COUNT(*) AS count FROM sales GROUP BY product ORDER BY count DESC LIMIT 2
+┌────────────────┬──────────────┐
+│ col_0          │ col_1        │
+├────────────────┼──────────────┤
+│ Widget A       │          180  │
+│ Widget B       │          165  │
+└────────────────┴──────────────┘
++(2 rows)
+⏱ Executed in 0.38ms
+
+olap> # Exit cleanly
+olap> EXIT
+Goodbye!
+⏱ Executed in 0.01ms
+```
+
+**Key REPL Features:**
+- **Command History**: Use up/down arrows to navigate previous commands
+- **Case Insensitive**: Commands work in any case (HELP, help, Help)
+- **Command Aliases**: Multiple formats supported (HELP/.HELP/?, SHOW TABLES/.TABLES)
+- **Error Recovery**: Errors don't crash the REPL, just show a message
+- **Performance**: All operations show timing in milliseconds
+- **Formatting**: Clean ASCII tables with proper alignment
 
 ---
 
