@@ -50,7 +50,7 @@
 - [x] Verify correctness vs expected results
 
 **Phase 1 Notes:**
-- ✅ Error handling module completed with 11 passing tests
+- ✅ Error handling module completed with 10 passing tests
 - ✅ Used thiserror for descriptive error types
 - ✅ Implemented Result type alias for cleaner error handling
 - ✅ Added comprehensive documentation for learning
@@ -82,6 +82,13 @@
 - ✅ Database internals theory covered in detail
 - ✅ Code examples and best practices documented
 - ✅ Self-assessment questions and exercises provided
+
+**Phase 1 Test Summary:**
+- ✅ Error handling: 10 tests
+- ✅ Core Data Types: 26 tests
+- ✅ Column implementations: 33 tests
+- ✅ Manual query integration: 15 tests
+- ✅ **Total Phase 1 Tests: 84**
 
 ---
 
@@ -154,6 +161,11 @@
 - ✅ Table copying: Clone trait manually implemented for Table struct
 - ✅ Table statistics: row_count() and column_count() methods in Table struct
 - ✅ Integration tests: test_catalog_with_table_operations() validates full workflow
+
+**Phase 2 Test Summary:**
+- ✅ Table implementation: 33 tests
+- ✅ Catalog implementation: 25 tests
+- ✅ **Total Phase 2 Tests: 58**
 
 ---
 
@@ -239,6 +251,10 @@
 - ✅ Phase 3 Learning Guide created (2,009 lines, 11 chapters)
 - ✅ Phase 3 Assessment created (1,919 lines, 45 questions)
 
+**Phase 3 Test Summary:**
+- ✅ CSV Ingestion module: 38 tests
+- ✅ **Total Phase 3 Tests: 38**
+
 ---
 
 ## 🎯 Phase 4: Query Operators
@@ -300,13 +316,19 @@
 
 **Phase 4 Notes:**
 - Implemented vectorized query execution with columnar batches
-- Created 5 core operators: TableScan, Filter, Project, GroupBy
+- Created 5 core operators: TableScan, Filter, Project, GroupBy, Limit, Sort
 - Implemented 5 aggregate functions: Count, Sum, Min, Max, Avg
-- All 310 unit tests passing with zero clippy warnings
+- All 142 library tests passing (77 execution + 65 aggregates) with zero clippy warnings
 - 16 comprehensive integration tests for operator chaining
 - Added Phase 4 Learning Guide (2,895 lines) and Assessment (1,220 lines)
 - Total code added: ~5,100 lines across execution.rs, aggregates.rs, and tests
 - Zero compilation errors and zero clippy warnings
+
+**Phase 4 Test Summary:**
+- ✅ Execution Engine module: 77 tests
+- ✅ Aggregates module: 65 tests
+- ✅ Operator integration tests: 16 tests
+- ✅ **Total Phase 4 Tests: 158**
 
 ---
 
@@ -360,12 +382,16 @@
 - All tests passing (19 parser tests)
 - Created comprehensive learning guide (2,170 lines) and assessment (785 lines)
 
+**Phase 5 Test Summary:**
+- ✅ Parser module: 19 tests
+- ✅ **Total Phase 5 Tests: 19**
+
 ---
 
 ## 🎯 Phase 6: Query Planning & Advanced Features
 **Status:** ✅ Complete (6.1 & 6.2)
 **Completed:** Phase 6.1 + Phase 6.2
-**Tests:** 18 (10 for 6.1, 8 for 6.2)
+**Tests:** 10 planner tests (6.1), 8 advanced features tests in execution/parser (6.2)
 
 ### 6.1 Query Planner ✅ Complete
 - [x] Enhance `src/execution.rs` with query planning support
@@ -401,6 +427,7 @@
 - **Execution Engine:** Created Sort operator (multi-column sorting, memory-based) and Limit operator (pagination)
 - **Planner Changes:** Updated plan_select() to handle ORDER BY, LIMIT, OFFSET with proper column mapping
 - **Type System:** Added SortDirection enum to types.rs
+- **Test Coverage:** 8 tests for ORDER BY, LIMIT, OFFSET features (included in execution and parser module test counts)
 - **Features:**
   - Single column ORDER BY with ASC/DESC
   - Multi-column ORDER BY with precedence
@@ -422,6 +449,11 @@
 - Clean formatting (cargo fmt) passed
 - No clippy warnings
 - Full documentation added (Phase 6.2 learning guide and assessment)
+
+**Phase 6 Test Summary:**
+- ✅ Query Planner module (6.1): 10 tests
+- ✅ Advanced Query Features (6.2): 8 tests for ORDER BY, LIMIT, OFFSET (included in execution and parser module counts)
+- ✅ **Total New Library Tests in Phase 6: 10**
 
 ---
 
@@ -519,12 +551,17 @@
   - WITH clause support for Common Table Expressions
   - Aggregate functions: COUNT(*), SUM, AVG, MIN, MAX
   
-- **Known Limitations**
+- Known Limitations:
   - Query results show `col_0`, `col_1`, etc. instead of actual column names
   - No DROP TABLE command
   - No tab completion
   - Single-line queries only
   - No export functionality
+
+**Phase 7 Test Summary:**
+- ✅ REPL implementation: 0 unit tests (tested with manual testing and shell scripts)
+- ✅ Test scripts: test_repl.sh, test_repl_simple.sh, final_test.sh
+- ✅ **Total New Tests in Phase 7: 0** (uses existing integration and manual query test infrastructure)
 
 ---
 
