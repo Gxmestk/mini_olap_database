@@ -1012,6 +1012,56 @@ The following items could be addressed in future updates:
   - Tips for success and common pitfalls
   - Time estimates for each section
 
+### Phase 8 Learning Guide
+- **File**: `docs/sessions/phase8/learning_guide.md` (2,371 lines)
+- **Chapters**: 12 comprehensive sections
+- **Content**:
+  - Overview and Learning Objectives for Phase 8
+  - API Documentation (cargo doc, rustdoc, documentation comments, doc tests)
+  - Test Strategy (unit tests, integration tests, test pyramid, AAA pattern)
+  - Performance & Memory Optimization (profiling tools, columnar storage, string handling, SIMD, compression)
+  - Property-Based Testing (proptest framework, strategies, properties, shrinking)
+  - Performance Benchmarks (Criterion framework, benchmarking best practices)
+  - Code Coverage (measurement tools, goals, improvement strategies)
+  - Best Practices (documentation, testing, performance, benchmarking)
+  - Key Concepts (comprehensive terminology and definitions)
+  - Practical Examples (detailed code examples for all topics)
+  - Resources & Further Reading (links to external documentation)
+  - Summary and key takeaways
+- **Learning Outcomes**: Mastering documentation, testing, performance optimization, and quality assurance practices
+- **Examples**: 4 comprehensive practical examples covering documentation, testing, benchmarking, and property-based testing
+
+### Phase 8 Assessment
+- **File**: `docs/sessions/phase8/assessment.md` (447 lines)
+- **Questions**: 45 questions across 5 sections
+- **Sections**:
+  * Section 1: API Documentation (10 questions)
+    - Multiple choice (5 questions)
+    - True/False (3 questions)
+    - Short answer (2 questions)
+  * Section 2: Test Strategy (10 questions)
+    - Multiple choice (5 questions)
+    - True/False (3 questions)
+    - Short answer (2 questions)
+  * Section 3: Performance & Memory Optimization (10 questions)
+    - Multiple choice (5 questions)
+    - True/False (3 questions)
+    - Short answer (2 questions)
+  * Section 4: Property-Based Testing (8 questions)
+    - Multiple choice (4 questions)
+    - True/False (2 questions)
+    - Short answer (2 questions)
+  * Section 5: Performance Benchmarks (7 questions)
+    - Multiple choice (3 questions)
+    - True/False (2 questions)
+    - Short answer (2 questions)
+- **Features**:
+  - Complete answer key with explanations
+  - Scoring guide with performance levels (80% passing)
+  - Time estimates for completion (60-90 minutes)
+  - Recommended next steps based on score
+  - Difficulty assessment (Intermediate)
+
 ### Phase 6.2 Learning Guide
 - **File**: `phase6_2-learning-guide.md` (1,108 lines)
 - **Chapters**: 10 comprehensive sections
