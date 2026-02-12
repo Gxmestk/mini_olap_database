@@ -166,7 +166,20 @@ Unlike production databases that are complex and hard to understand, Mini Rust O
     - ORDER BY benchmarks
     - Full query execution benchmarks
   - **Proptest Integration**: Added `proptest` dependency for property-based testing
-  - **Phase 8 Summary**: Completion document at `docs/sessions/phase8_completion.md`
+  - **Learning Guide**: Comprehensive Phase 8 learning guide at `docs/phase8-learning-guide.md` (2,371 lines)
+    - API Documentation (cargo doc, rustdoc, doc tests)
+    - Test Strategy (unit, integration, property-based tests)
+    - Performance & Memory Optimization (profiling, SIMD, compression)
+    - Property-Based Testing (proptest framework, strategies, shrinking)
+    - Performance Benchmarks (Criterion framework, best practices)
+    - Code Coverage (measurement tools and goals)
+    - Best Practices for all topics
+    - 4 detailed practical examples with code
+  - **Assessment**: Phase 8 assessment at `docs/phase8-assessment.md` (447 lines)
+    - 45 questions across 5 sections
+    - Complete answer key with explanations
+    - Scoring guide (80% passing threshold)
+    - Time estimate: 60-90 minutes
 
   ### Planned Features (Roadmap)
 
@@ -703,7 +716,7 @@ cargo tarpaulin --out Html
 
 ### Current Test Status
 
-- **Total Tests**: 443 passing ✅ (361 library tests + 16 integration tests + 15 manual tests + 51 doc tests)
+- **Total Tests**: 499 passing ✅ (361 library tests + 51 integration tests + 16 manual tests + 51 doc tests + 20 property-based tests)
 - **Library Tests**: 361 (error: 10, types: 26, column: 33, table: 33, catalog: 25, ingest: 38, execution: 77, aggregates: 65, parser: 19, planner: 10, lib: 3)
 - **Integration Tests**: 16 (operator chaining: 16)
 - **Manual Query Tests**: 15
@@ -833,6 +846,59 @@ cargo tarpaulin --out Html
   - Advanced topics (20 points)
   - Bonus questions (20 points)
   - Total: 170 points (passing: 70%)
+
+#### Phase 7: Interactive REPL
+
+✅ **Phase 7 Learning Guide** (`docs/phase7-learning-guide.md`) - 462 lines covering:
+  - REPL Overview and Learning Objectives
+  - Rust Concepts: rustyline crate, error handling, command pattern
+  - Database Concepts: end-to-end query processing, catalog management
+  - Implementation Walkthrough: REPL structure, command processing, query execution
+  - Testing Strategies: manual testing with shell scripts, integration testing
+  - Common Challenges & Solutions: column names, error conversion, borrowing issues
+  - Code Organization: file structure, adding new commands
+  - Key Takeaways: UX importance, incremental development
+  - Further Improvements: short-term, medium-term, long-term features
+  - Completion Checklist
+
+✅ **Phase 7 Assessment** (`docs/phase7-assessment.md`) - 620 lines
+  - Comprehensive assessment across 5 parts
+  - Part 1: Knowledge Questions (25 points, 15 questions)
+  - Part 2: Practical Tasks (35 points, 5 tasks)
+  - Part 3: Code Review (20 points, 3 reviews)
+  - Part 4: Challenge Exercises (20 points each)
+  - Part 5: Integration Verification (optional extra credit)
+  - Complete answer keys and suggested improvements
+  - Self-check checklist with tips for success
+  - Time estimates for each section
+
+#### Phase 8: Additional Tasks & Quality Improvements
+
+✅ **Phase 8 Learning Guide** (`docs/phase8-learning-guide.md`) - 2,371 lines covering 12 sections:
+  - Overview and Learning Objectives for Phase 8
+  - API Documentation (cargo doc, rustdoc, documentation comments, doc tests)
+  - Test Strategy (unit tests, integration tests, test pyramid, AAA pattern)
+  - Performance & Memory Optimization (profiling tools, columnar storage, string handling, SIMD, compression)
+  - Property-Based Testing (proptest framework, strategies, properties, shrinking)
+  - Performance Benchmarks (Criterion framework, benchmarking best practices)
+  - Code Coverage (measurement tools, goals, improvement strategies)
+  - Best Practices (documentation, testing, performance, benchmarking)
+  - Key Concepts (comprehensive terminology and definitions)
+  - Practical Examples (detailed code examples for all topics)
+  - Resources & Further Reading (links to external documentation)
+  - Summary and key takeaways
+
+✅ **Phase 8 Assessment** (`docs/phase8-assessment.md`) - 447 lines
+  - 45 questions across 5 sections
+  - Section 1: API Documentation (10 questions)
+  - Section 2: Test Strategy (10 questions)
+  - Section 3: Performance & Memory Optimization (10 questions)
+  - Section 4: Property-Based Testing (8 questions)
+  - Section 5: Performance Benchmarks (7 questions)
+  - Complete answer key with explanations
+  - Scoring guide with performance levels (80% passing)
+  - Time estimates for completion (60-90 minutes)
+  - Difficulty assessment (Intermediate)
 
 #### General Documentation
 
